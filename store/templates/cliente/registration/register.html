@@ -1,0 +1,172 @@
+{% extends 'cliente/base.html' %}
+{% load static %}
+
+{% block title %}Registro - ArtStore{% endblock %}
+
+{% block content %}
+<div class="auth-container">
+    <div class="auth-card">
+        <div class="auth-header">
+            <h2><i class="fas fa-user-plus"></i> Crear Cuenta</h2>
+            <p>Únete a nuestra comunidad de arte</p>
+        </div>
+        
+        <form method="POST" action="{% url 'registro' %}">
+            {% csrf_token %}
+            
+            {% if form.errors %}
+            <div class="auth-error">
+                <i class="fas fa-exclamation-circle"></i>
+                {% for field, errors in form.errors.items %}
+                    {% for error in errors %}
+                        {{ error }}<br>
+                    {% endfor %}
+                {% endfor %}
+            </div>
+            {% endif %}
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="id_first_name"><i class="fas fa-user"></i> Nombre</label>
+                    <input type="text" name="first_name" id="id_first_name" 
+                           class="form-control" required value="{{ form.first_name.value|default:'' }}">
+                </div>
+                
+                <div class="form-group">
+                    <label for="id_last_name"><i class="fas fa-user"></i> Apellido</label>
+                    <input type="text" name="last_name" id="id_last_name" 
+                           class="form-control" required value="{{ form.last_name.value|default:'' }}">
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label for="id_username"><i class="fas fa-at"></i> Nombre de usuario</label>
+                <input type="text" name="username" id="id_username" 
+                       class="form-control" required value="{{ form.username.value|default:'' }}">
+                <small class="form-text">Máximo 150 caracteres. Solo letras, números y @/./+/-/_</small>
+            </div>
+            
+            <div class="form-group">
+                <label for="id_email"><i class="fas fa-envelope"></i> Correo electrónico</label>
+                <input type="email" name="email" id="id_email" 
+                       class="form-control" required value="{{ form.email.value|default:'' }}">
+            </div>
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="id_password1"><i class="fas fa-lock"></i> Contraseña</label>
+                    <input type="password" name="password1" id="id_password1" 
+                           class="form-control" required>
+                    <small class="form-text">
+                        <i class="fas fa-info-circle"></i> Mínimo 8 caracteres, no solo números.
+                    </small>
+                </div>
+                
+                <div class="form-group">
+                    <label for="id_password2"><i class="fas fa-lock"></i> Confirmar contraseña</label>
+                    <input type="password" name="password2" id="id_password2" 
+                           class="form-control" required>
+                </div>
+            </div>
+            
+            <div class="form-group terms">
+                <input type="checkbox" name="terms" id="terms" required>
+                <label for="terms">
+                    Acepto los <a href="#">Términos y Condiciones</a> y la <a href="#">Política de Privacidad</a>
+                </label>
+            </div>
+            
+            <button type="submit" class="btn-register-submit">
+                <i class="fas fa-user-check"></i> Crear Cuenta
+            </button>
+            
+            <div class="auth-links">
+                <a href="{% url 'login' %}" class="login-link">
+                    <i class="fas fa-sign-in-alt"></i> ¿Ya tienes cuenta? Inicia Sesión
+                </a>
+            </div>
+        </form>
+    </div>
+    
+    <div class="auth-welcome">
+        <h3>¡Únete a ArtStore!</h3>
+        <p>Al registrarte obtendrás:</p>
+        <ul>
+            <li><i class="fas fa-shopping-cart"></i> Carrito de compras personalizado</li>
+            <li><i class="fas fa-history"></i> Historial completo de tus pedidos</li>
+            <li><i class="fas fa-heart"></i> Lista de favoritos para guardar obras que te gusten</li>
+            <li><i class="fas fa-tags"></i> Descuentos exclusivos para miembros</li>
+            <li><i class="fas fa-paint-brush"></i> Posibilidad de hacer encargos personalizados</li>
+            <li><i class="fas fa-bell"></i> Notificaciones de nuevos productos y ofertas</li>
+            <li><i class="fas fa-star"></i> Programa de puntos y recompensas</li>
+        </ul>
+        
+        <div class="testimonial">
+            <p>"ArtStore me ha permitido encontrar materiales de calidad y descubrir artistas increíbles."</p>
+            <div class="testimonial-author">
+                <strong>María González</strong>
+                <span>Artista y cliente desde 2022</span>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Mostrar requisitos de contraseña
+const password1 = document.getElementById('id_password1');
+const password2 = document.getElementById('id_password2');
+
+function validatePasswords() {
+    const p1 = password1.value;
+    const p2 = password2.value;
+    
+    if (p1 !== p2) {
+        password2.style.borderColor = '#f44336';
+        return false;
+    } else {
+        password2.style.borderColor = '#4CAF50';
+        return true;
+    }
+}
+
+password1.addEventListener('input', validatePasswords);
+password2.addEventListener('input', validatePasswords);
+
+// Validación en tiempo real
+document.querySelectorAll('input').forEach(input => {
+    input.addEventListener('blur', function() {
+        if (this.value.trim() === '' && this.hasAttribute('required')) {
+            this.style.borderColor = '#f44336';
+        } else {
+            this.style.borderColor = '#ccc';
+        }
+    });
+});
+
+// Mostrar/ocultar contraseñas
+function addPasswordToggle(inputId) {
+    const input = document.getElementById(inputId);
+    const toggle = document.createElement('span');
+    toggle.innerHTML = '<i class="fas fa-eye"></i>';
+    toggle.className = 'toggle-password';
+    toggle.style.cursor = 'pointer';
+    toggle.style.position = 'absolute';
+    toggle.style.right = '10px';
+    toggle.style.top = '35px';
+    
+    input.parentElement.style.position = 'relative';
+    input.parentElement.appendChild(toggle);
+    
+    toggle.addEventListener('click', function() {
+        const type = input.getAttribute('type') === 'password' ? 'text' : 'password';
+        input.setAttribute('type', type);
+        this.innerHTML = type === 'password' ? '<i class="fas fa-eye"></i>' : '<i class="fas fa-eye-slash"></i>';
+    });
+}
+
+addPasswordToggle('id_password1');
+addPasswordToggle('id_password2');
+</script>
+{% endblock %}

@@ -1,0 +1,369 @@
+{% extends 'cliente/base.html' %}
+{% load static %}
+{% load math %} 
+
+{% block title %}{{ producto.nombre }} - ArtStore{% endblock %}
+
+{% block content %}
+<div class="detalle-producto-container">
+    <!-- Ruta de navegación -->
+    <nav class="breadcrumb">
+        <a href="{% url 'index' %}">Inicio</a>
+        <span class="separator">></span>
+        <a href="{% url 'productos_por_categoria' producto.tipo %}">
+            {{ producto.get_tipo_display }}
+        </a>
+        <span class="separator">></span>
+        <span class="current">{{ producto.nombre|truncatechars:30 }}</span>
+    </nav>
+
+    <!-- Contenido principal -->
+    <div class="detalle-grid">
+        <!-- Columna izquierda: Imágenes -->
+        <div class="detalle-imagenes">
+            <div class="imagen-principal">
+                {% if producto.imagen %}
+                <img src="{{ producto.imagen.url }}" alt="{{ producto.nombre }}" id="imagenPrincipal">
+                {% else %}
+                <div class="sin-imagen">
+                    <i class="fas fa-image fa-5x"></i>
+                    <p>Imagen no disponible</p>
+                </div>
+                {% endif %}
+                
+                <!-- Badges -->
+                <div class="badges-container">
+                    {% if producto.destacado %}
+                    <span class="badge destacado">
+                        <i class="fas fa-star"></i> Destacado
+                    </span>
+                    {% endif %}
+                    
+                    {% if producto.stock <= 5 and producto.stock > 0 %}
+                    <span class="badge stock-bajo">
+                        <i class="fas fa-exclamation-triangle"></i> Poco stock
+                    </span>
+                    {% elif producto.stock == 0 %}
+                    <span class="badge agotado">
+                        <i class="fas fa-times-circle"></i> Agotado
+                    </span>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Miniaturas (si hubiera más imágenes) -->
+            <div class="miniaturas">
+                {% if producto.imagen %}
+                <div class="miniatura active" data-imagen="{{ producto.imagen.url }}">
+                    <img src="{{ producto.imagen.url }}" alt="{{ producto.nombre }}">
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Columna derecha: Información -->
+        <div class="detalle-informacion">
+            <h1 class="producto-nombre">{{ producto.nombre }}</h1>
+            
+            {% if producto.artista %}
+            <div class="producto-artista">
+                <i class="fas fa-user"></i>
+                <span>Artista: </span>
+                <a href="#" class="artista-link">{{ producto.artista.nombre }}</a>
+            </div>
+            {% endif %}
+            
+            <div class="producto-rating">
+                <div class="estrellas">
+                    <i class="fas fa-star"></i>
+                    <i class="fas fa-star"></i>
+                    <i class="fas fa-star"></i>
+                    <i class="fas fa-star"></i>
+                    <i class="far fa-star"></i>
+                </div>
+                <span class="rating-text">(4.0) • 15 reseñas</span>
+            </div>
+            
+            <div class="producto-precio">
+                <span class="precio-actual">${{ precio_sin_iva|floatformat:2 }}</span>
+                <span class="iva">+ IVA 16%: ${{ iva|floatformat:2 }}</span>
+                <span class="precio-total">
+                    Total: ${{ precio_con_iva|floatformat:2 }}
+                </span>
+            </div>
+                        
+            <div class="producto-stock">
+                <i class="fas fa-{% if producto.stock > 0 %}check-circle{% else %}times-circle{% endif %}"></i>
+                <span class="stock-text">
+                    {% if producto.stock > 0 %}
+                    <strong>{{ producto.stock }} unidades</strong> disponibles
+                    {% else %}
+                    <strong>Agotado</strong> - Próximamente disponible
+                    {% endif %}
+                </span>
+            </div>
+            
+            <div class="producto-meta">
+                <div class="meta-item">
+                    <i class="fas fa-tag"></i>
+                    <span>Categoría: {{ producto.get_tipo_display }}</span>
+                </div>
+                
+                {% if producto.categoria %}
+                <div class="meta-item">
+                    <i class="fas fa-folder"></i>
+                    <span>Subcategoría: {{ producto.categoria.nombre }}</span>
+                </div>
+                {% endif %}
+                
+                <div class="meta-item">
+                    <i class="fas fa-calendar"></i>
+                    <span>Agregado: {{ producto.fecha_creacion|date:"d/m/Y" }}</span>
+                </div>
+            </div>
+
+            <!-- Formulario de compra -->
+            <div class="compra-container">
+                <h3><i class="fas fa-shopping-cart"></i> Comprar ahora</h3>
+                
+                {% if producto.stock > 0 %}
+                <form method="POST" action="{% url 'agregar_al_carrito' producto.id %}" class="form-compra">
+                    {% csrf_token %}
+                    
+                    <div class="cantidad-group">
+                        <label for="cantidad"><i class="fas fa-hashtag"></i> Cantidad:</label>
+                        <div class="cantidad-controls">
+                            <button type="button" class="btn-cantidad decrementar">-</button>
+                            <input type="number" name="cantidad" id="cantidad" value="1" min="1" max="{{ producto.stock }}" class="input-cantidad">
+                            <button type="button" class="btn-cantidad incrementar">+</button>
+                        </div>
+                        <span class="stock-max">Máximo: {{ producto.stock }}</span>
+                    </div>
+                    
+                    <div class="botones-compra">
+                        <button type="submit" class="btn-agregar-carrito">
+                            <i class="fas fa-cart-plus"></i> Añadir al carrito
+                        </button>
+                        
+                        {% if user.is_authenticated %}
+                        <a href="{% url 'checkout' %}" class="btn-comprar-ahora">
+                            <i class="fas fa-bolt"></i> Comprar ahora
+                        </a>
+                        {% else %}
+                        <a href="{% url 'login' %}?next={% url 'detalle_producto' producto.id %}" class="btn-comprar-ahora">
+                            <i class="fas fa-bolt"></i> Comprar ahora
+                        </a>
+                        {% endif %}
+                    </div>
+                </form>
+                {% else %}
+                <div class="agotado-alerta">
+                    <i class="fas fa-bell"></i>
+                    <p>Este producto está actualmente agotado. Puedes contactarnos para saber cuándo estará disponible nuevamente.</p>
+                    <button class="btn-notificar" onclick="notificarDisponibilidad()">
+                        <i class="fas fa-envelope"></i> Notificarme cuando esté disponible
+                    </button>
+                </div>
+                {% endif %}
+                
+                <div class="garantias">
+                    <div class="garantia">
+                        <i class="fas fa-shield-alt"></i>
+                        <span>Compra 100% segura</span>
+                    </div>
+                    <div class="garantia">
+                        <i class="fas fa-truck"></i>
+                        <span>Envío en 24-48 horas</span>
+                    </div>
+                    <div class="garantia">
+                        <i class="fas fa-undo"></i>
+                        <span>Devolución en 30 días</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Descripción detallada -->
+    <div class="descripcion-detallada">
+        <h2><i class="fas fa-file-alt"></i> Descripción del producto</h2>
+        <div class="descripcion-contenido">
+            {{ producto.descripcion|linebreaks }}
+        </div>
+        
+        {% if producto.tipo == 'oleo' or producto.tipo == 'acrilico' %}
+        <div class="caracteristicas-tecnicas">
+            <h3><i class="fas fa-cogs"></i> Características técnicas</h3>
+            <ul>
+                <li><strong>Tipo de pintura:</strong> {{ producto.get_tipo_display }}</li>
+                <li><strong>Base:</strong> Acuosa/Aceite</li>
+                <li><strong>Tiempo de secado:</strong> 24-48 horas</li>
+                <li><strong>Resistencia a la luz:</strong> Alta</li>
+                <li><strong>Recomendaciones:</strong> Usar en interiores, evitar luz solar directa</li>
+            </ul>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Productos relacionados -->
+    {% if productos_relacionados %}
+    <div class="productos-relacionados">
+        <h2><i class="fas fa-random"></i> Productos relacionados</h2>
+        <div class="relacionados-grid">
+            {% for relacionado in productos_relacionados %}
+            <div class="producto-relacionado">
+                <a href="{% url 'detalle_producto' relacionado.id %}">
+                    {% if relacionado.imagen %}
+                    <img src="{{ relacionado.imagen.url }}" alt="{{ relacionado.nombre }}">
+                    {% else %}
+                    <div class="sin-imagen-rel">
+                        <i class="fas fa-image"></i>
+                    </div>
+                    {% endif %}
+                    <h4>{{ relacionado.nombre }}</h4>
+                    <p class="precio-rel">${{ relacionado.precio }}</p>
+                </a>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Reseñas (simuladas) -->
+    <div class="resenas-producto">
+        <h2><i class="fas fa-comments"></i> Reseñas de clientes</h2>
+        <div class="resena-promedio">
+            <div class="puntuacion">
+                <span class="numero">4.0</span>
+                <div class="estrellas">
+                    <i class="fas fa-star"></i>
+                    <i class="fas fa-star"></i>
+                    <i class="fas fa-star"></i>
+                    <i class="fas fa-star"></i>
+                    <i class="far fa-star"></i>
+                </div>
+                <span class="total-resenas">15 reseñas</span>
+            </div>
+            
+            <div class="distribucion">
+                <div class="nivel">
+                    <span>5 estrellas</span>
+                    <div class="barra"><div class="relleno" style="width: 60%"></div></div>
+                    <span>9</span>
+                </div>
+                <div class="nivel">
+                    <span>4 estrellas</span>
+                    <div class="barra"><div class="relleno" style="width: 30%"></div></div>
+                    <span>4</span>
+                </div>
+                <div class="nivel">
+                    <span>3 estrellas</span>
+                    <div class="barra"><div class="relleno" style="width: 10%"></div></div>
+                    <span>2</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="lista-resenas">
+            <div class="resena">
+                <div class="resena-header">
+                    <div class="resena-autor">
+                        <strong>María González</strong>
+                        <div class="estrellas pequeñas">
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="far fa-star"></i>
+                        </div>
+                    </div>
+                    <span class="resena-fecha">Hace 2 semanas</span>
+                </div>
+                <div class="resena-texto">
+                    "Excelente calidad, los colores son vibrantes y la textura es perfecta. 
+                    Definitivamente recomiendo este producto para artistas profesionales."
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Control de cantidad
+document.addEventListener('DOMContentLoaded', function() {
+    const inputCantidad = document.getElementById('cantidad');
+    const btnIncrementar = document.querySelector('.incrementar');
+    const btnDecrementar = document.querySelector('.decrementar');
+    const maxStock = parseInt('{{ producto.stock }}');
+    
+    // Incrementar cantidad
+    btnIncrementar.addEventListener('click', function() {
+        let valor = parseInt(inputCantidad.value);
+        if (valor < maxStock) {
+            inputCantidad.value = valor + 1;
+        }
+    });
+    
+    // Decrementar cantidad
+    btnDecrementar.addEventListener('click', function() {
+        let valor = parseInt(inputCantidad.value);
+        if (valor > 1) {
+            inputCantidad.value = valor - 1;
+        }
+    });
+    
+    // Validar cantidad manual
+    inputCantidad.addEventListener('change', function() {
+        let valor = parseInt(this.value);
+        if (isNaN(valor) || valor < 1) {
+            this.value = 1;
+        } else if (valor > maxStock) {
+            this.value = maxStock;
+            alert(`Solo hay ${maxStock} unidades disponibles.`);
+        }
+    });
+    
+    // Cambiar imagen principal al hacer clic en miniatura
+    document.querySelectorAll('.miniatura').forEach(miniatura => {
+        miniatura.addEventListener('click', function() {
+            const nuevaImagen = this.dataset.imagen;
+            document.getElementById('imagenPrincipal').src = nuevaImagen;
+            
+            // Actualizar clase activa
+            document.querySelectorAll('.miniatura').forEach(m => m.classList.remove('active'));
+            this.classList.add('active');
+        });
+    });
+    
+    // Formulario de compra
+    const formCompra = document.querySelector('.form-compra');
+    if (formCompra) {
+        formCompra.addEventListener('submit', function(e) {
+            const cantidad = parseInt(inputCantidad.value);
+            const button = this.querySelector('button[type="submit"]');
+            const originalText = button.innerHTML;
+            
+            // Mostrar feedback
+            button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Agregando...';
+            button.disabled = true;
+            
+            // Restaurar después de 2 segundos
+            setTimeout(() => {
+                button.innerHTML = originalText;
+                button.disabled = false;
+            }, 2000);
+        });
+    }
+});
+
+// Notificar disponibilidad
+function notificarDisponibilidad() {
+    const email = prompt('Ingresa tu correo electrónico para notificarte cuando esté disponible:');
+    if (email) {
+        alert(`Te notificaremos a ${email} cuando este producto esté disponible. ¡Gracias!`);
+    }
+}
+</script>
+{% endblock %}
