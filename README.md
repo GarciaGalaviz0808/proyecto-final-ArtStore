@@ -67,6 +67,7 @@ proyecto final de arte
 <img width="1357" height="642" alt="image" src="https://github.com/user-attachments/assets/2e6b24df-0cfd-49da-a250-10f6ec5080b2" />
 <img width="1361" height="212" alt="image" src="https://github.com/user-attachments/assets/a7b285ae-1b71-42c0-9f1e-d35c668b01dc" />
 <img width="1355" height="637" alt="image" src="https://github.com/user-attachments/assets/cbc694e1-9cf1-422a-98ca-0cd3fe3646c8" />
+<img width="1365" height="245" alt="image" src="https://github.com/user-attachments/assets/856ee2d3-1dbb-459b-abba-f378c1e0d759" />
 
 
 
