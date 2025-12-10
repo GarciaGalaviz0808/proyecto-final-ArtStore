@@ -1,0 +1,381 @@
+{% extends 'admin/base_admin.html' %}
+
+{% block title %}Dashboard - ArtStore Admin{% endblock %}
+
+{% block breadcrumbs %}
+<li class="active">Dashboard</li>
+{% endblock %}
+
+{% block content %}
+<div class="dashboard">
+    <div class="dashboard-header">
+        <h2><i class="fas fa-tachometer-alt"></i> Panel de Control</h2>
+        <p class="welcome">Bienvenido, {{ user.get_full_name|default:user.username }}</p>
+        <p class="date-info"><i class="far fa-calendar"></i> {% now "l, d F Y" %}</p>
+    </div>
+
+    <!-- Estadísticas Rápidas -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-icon" style="background: #4CAF50;">
+                <i class="fas fa-box"></i>
+            </div>
+            <div class="stat-info">
+                <h3>{{ estadisticas.total_productos }}</h3>
+                <p>Productos</p>
+            </div>
+            <a href="{% url 'crud_lista' 'productos' %}" class="stat-link">Ver todos →</a>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon" style="background: #2196F3;">
+                <i class="fas fa-shopping-bag"></i>
+            </div>
+            <div class="stat-info">
+                <h3>{{ estadisticas.total_pedidos }}</h3>
+                <p>Pedidos Totales</p>
+            </div>
+            <a href="{% url 'crud_lista' 'pedidos' %}" class="stat-link">Ver todos →</a>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon" style="background: #FF9800;">
+                <i class="fas fa-users"></i>
+            </div>
+            <div class="stat-info">
+                <h3>{{ estadisticas.total_usuarios }}</h3>
+                <p>Usuarios</p>
+            </div>
+            <a href="#" class="stat-link">Gestionar →</a>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon" style="background: #9C27B0;">
+                <i class="fas fa-star"></i>
+            </div>
+            <div class="stat-info">
+                <h3>{{ estadisticas.total_encargos }}</h3>
+                <p>Encargos</p>
+            </div>
+            <a href="{% url 'crud_lista' 'encargos' %}" class="stat-link">Ver todos →</a>
+        </div>
+
+        <div class="stat-card warning">
+            <div class="stat-icon" style="background: #FF5722;">
+                <i class="fas fa-clock"></i>
+            </div>
+            <div class="stat-info">
+                <h3>{{ estadisticas.pedidos_pendientes }}</h3>
+                <p>Pedidos Pendientes</p>
+            </div>
+            <a href="{% url 'crud_lista' 'pedidos' %}?estado=pendiente" class="stat-link">Revisar →</a>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon" style="background: #607D8B;">
+                <i class="fas fa-exclamation-triangle"></i>
+            </div>
+            <div class="stat-info">
+                <h3>{{ productos_bajo_stock|length }}</h3>
+                <p>Stock Bajo</p>
+            </div>
+            <a href="{% url 'crud_lista' 'productos' %}?stock=bajo" class="stat-link">Revisar →</a>
+        </div>
+    </div>
+
+    <!-- Pedidos Recientes -->
+    <div class="dashboard-section">
+        <div class="section-header">
+            <h3><i class="fas fa-history"></i> Pedidos Recientes</h3>
+            <a href="{% url 'crud_lista' 'pedidos' %}" class="btn-view-all">Ver Todos</a>
+        </div>
+        
+        <div class="table-responsive">
+            <table class="dashboard-table">
+                <thead>
+                    <tr>
+                        <th>N° Pedido</th>
+                        <th>Cliente</th>
+                        <th>Fecha</th>
+                        <th>Total</th>
+                        <th>Estado</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for pedido in pedidos_recientes %}
+                    <tr>
+                        <td><strong>#{{ pedido.numero_pedido }}</strong></td>
+                        <td>{{ pedido.usuario.get_full_name|default:pedido.usuario.username }}</td>
+                        <td>{{ pedido.fecha_pedido|date:"d/m/Y H:i" }}</td>
+                        <td>${{ pedido.total }}</td>
+                        <td>
+                            <span class="status-badge status-{{ pedido.estado }}">
+                                {{ pedido.get_estado_display }}
+                            </span>
+                        </td>
+                        <td>
+                            <a href="{% url 'crud_detalle' 'pedidos' pedido.id %}" class="btn-action btn-view">
+                                <i class="fas fa-eye"></i>
+                            </a>
+                            <a href="{% url 'crud_editar' 'pedidos' pedido.id %}" class="btn-action btn-edit">
+                                <i class="fas fa-edit"></i>
+                            </a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="text-center">No hay pedidos recientes</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Productos con Stock Bajo -->
+    <div class="dashboard-section">
+        <div class="section-header">
+            <h3><i class="fas fa-exclamation-triangle"></i> Productos con Stock Bajo</h3>
+            <a href="{% url 'crud_crear' 'productos' %}" class="btn-add">
+                <i class="fas fa-plus"></i> Agregar Producto
+            </a>
+        </div>
+        
+        <div class="cards-grid">
+            {% for producto in productos_bajo_stock %}
+            <div class="product-card">
+                <div class="product-image">
+                    {% if producto.imagen %}
+                    <img src="{{ producto.imagen.url }}" alt="{{ producto.nombre }}">
+                    {% else %}
+                    <div class="no-image">
+                        <i class="fas fa-image"></i>
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="product-info">
+                    <h4>{{ producto.nombre }}</h4>
+                    <p class="product-category">{{ producto.get_tipo_display }}</p>
+                    <div class="product-stock">
+                        <span class="stock-label">Stock:</span>
+                        <span class="stock-value {% if producto.stock < 3 %}danger{% elif producto.stock < 10 %}warning{% else %}success{% endif %}">
+                            {{ producto.stock }} unidades
+                        </span>
+                    </div>
+                    <p class="product-price">${{ producto.precio }}</p>
+                </div>
+                <div class="product-actions">
+                    <a href="{% url 'crud_editar' 'productos' producto.id %}" class="btn-action btn-edit">
+                        <i class="fas fa-edit"></i> Reponer
+                    </a>
+                </div>
+            </div>
+            {% empty %}
+            <div class="empty-state">
+                <i class="fas fa-check-circle fa-3x"></i>
+                <h4>¡Excelente!</h4>
+                <p>Todos los productos tienen stock suficiente.</p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Gráficos y Estadísticas -->
+    <div class="dashboard-section">
+        <div class="section-header">
+            <h3><i class="fas fa-chart-line"></i> Estadísticas del Mes</h3>
+            <select class="chart-filter">
+                <option>Este mes</option>
+                <option>Mes pasado</option>
+                <option>Últimos 3 meses</option>
+                <option>Este año</option>
+            </select>
+        </div>
+        
+        <div class="charts-grid">
+            <div class="chart-container">
+                <div class="chart-header">
+                    <h4>Ventas por Día</h4>
+                    <span class="chart-total">Total: $12,450</span>
+                </div>
+                <div class="chart-placeholder">
+                    <canvas id="salesChart"></canvas>
+                </div>
+            </div>
+            
+            <div class="chart-container">
+                <div class="chart-header">
+                    <h4>Productos más Vendidos</h4>
+                    <span class="chart-total">Top 5</span>
+                </div>
+                <div class="chart-placeholder">
+                    <canvas id="productsChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Acciones Rápidas -->
+    <div class="quick-actions">
+        <h3><i class="fas fa-bolt"></i> Acciones Rápidas</h3>
+        <div class="actions-grid">
+            <a href="{% url 'crud_crear' 'productos' %}" class="action-card">
+                <div class="action-icon">
+                    <i class="fas fa-plus"></i>
+                </div>
+                <h4>Agregar Producto</h4>
+                <p>Crear un nuevo producto en el catálogo</p>
+            </a>
+            
+            <a href="{% url 'crud_crear' 'artistas' %}" class="action-card">
+                <div class="action-icon">
+                    <i class="fas fa-user-plus"></i>
+                </div>
+                <h4>Agregar Artista</h4>
+                <p>Registrar un nuevo artista en el sistema</p>
+            </a>
+            
+            <a href="#" class="action-card">
+                <div class="action-icon">
+                    <i class="fas fa-file-invoice-dollar"></i>
+                </div>
+                <h4>Generar Reporte</h4>
+                <p>Crear reporte de ventas del mes</p>
+            </a>
+            
+            <a href="#" class="action-card">
+                <div class="action-icon">
+                    <i class="fas fa-bell"></i>
+                </div>
+                <h4>Notificaciones</h4>
+                <p>Ver notificaciones del sistema</p>
+            </a>
+            
+            <a href="#" class="action-card">
+                <div class="action-icon">
+                    <i class="fas fa-cog"></i>
+                </div>
+                <h4>Ajustes</h4>
+                <p>Configurar preferencias del sistema</p>
+            </a>
+            
+            <a href="{% url 'index' %}" target="_blank" class="action-card">
+                <div class="action-icon">
+                    <i class="fas fa-external-link-alt"></i>
+                </div>
+                <h4>Ver Tienda</h4>
+                <p>Abrir la tienda en nueva pestaña</p>
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+// Gráfico de ventas
+const salesCtx = document.getElementById('salesChart').getContext('2d');
+const salesChart = new Chart(salesCtx, {
+    type: 'line',
+    data: {
+        labels: ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'],
+        datasets: [{
+            label: 'Ventas ($)',
+            data: [1200, 1900, 1500, 2500, 2200, 3000, 2800],
+            borderColor: '#5b3a1a',
+            backgroundColor: 'rgba(91, 58, 26, 0.1)',
+            borderWidth: 2,
+            fill: true,
+            tension: 0.4
+        }]
+    },
+    options: {
+        responsive: true,
+        plugins: {
+            legend: {
+                display: false
+            }
+        },
+        scales: {
+            y: {
+                beginAtZero: true,
+                grid: {
+                    color: 'rgba(0,0,0,0.05)'
+                }
+            },
+            x: {
+                grid: {
+                    display: false
+                }
+            }
+        }
+    }
+});
+
+// Gráfico de productos
+const productsCtx = document.getElementById('productsChart').getContext('2d');
+const productsChart = new Chart(productsCtx, {
+    type: 'bar',
+    data: {
+        labels: ['Óleos', 'Acrílicos', 'Lienzos', 'Pinceles', 'Obras'],
+        datasets: [{
+            label: 'Ventas',
+            data: [65, 59, 80, 81, 56],
+            backgroundColor: [
+                '#5b3a1a',
+                '#a16528',
+                '#7b4b22',
+                '#c07a35',
+                '#3e2b20'
+            ],
+            borderWidth: 0
+        }]
+    },
+    options: {
+        responsive: true,
+        plugins: {
+            legend: {
+                display: false
+            }
+        },
+        scales: {
+            y: {
+                beginAtZero: true,
+                grid: {
+                    color: 'rgba(0,0,0,0.05)'
+                }
+            },
+            x: {
+                grid: {
+                    display: false
+                }
+            }
+        }
+    }
+});
+
+// Actualizar estadísticas cada 60 segundos
+setInterval(() => {
+    fetch('/api/dashboard/stats/')
+        .then(response => response.json())
+        .then(data => {
+            // Actualizar contadores
+            document.querySelectorAll('.stat-card h3').forEach((elem, index) => {
+                const counters = [
+                    data.total_productos,
+                    data.total_pedidos,
+                    data.total_usuarios,
+                    data.total_encargos,
+                    data.pedidos_pendientes,
+                    data.stock_bajo
+                ];
+                if (index < counters.length) {
+                    elem.textContent = counters[index];
+                }
+            });
+        });
+}, 60000);
+</script>
+{% endblock %}

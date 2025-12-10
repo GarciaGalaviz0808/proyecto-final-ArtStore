@@ -1,0 +1,780 @@
+{% extends 'admin/base_admin.html' %}
+
+{% block title %}Detalle de {{ titulo }} - ArtStore Admin{% endblock %}
+
+{% block breadcrumbs %}
+<li><a href="{% url 'crud_lista' modelo %}">{{ modelo|capfirst }}</a></li>
+<li class="active">Detalle</li>
+{% endblock %}
+
+{% block content %}
+<div class="detail-container">
+    <div class="detail-header">
+        <div class="detail-title">
+            <h2><i class="fas fa-info-circle"></i> Detalle de {{ titulo }}</h2>
+            <p class="detail-subtitle">ID: {{ objeto.id }}</p>
+        </div>
+        
+        <div class="detail-actions">
+            <a href="{% url 'crud_lista' modelo %}" class="btn-back">
+                <i class="fas fa-arrow-left"></i> Volver
+            </a>
+            <a href="{% url 'crud_editar' modelo objeto.id %}" class="btn-edit">
+                <i class="fas fa-edit"></i> Editar
+            </a>
+            <a href="{% url 'crud_eliminar' modelo objeto.id %}" class="btn-delete">
+                <i class="fas fa-trash"></i> Eliminar
+            </a>
+            
+            {% if modelo == 'pedidos' %}
+            <button class="btn-print" onclick="window.print()">
+                <i class="fas fa-print"></i> Imprimir
+            </button>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="detail-content">
+        {% if modelo == 'productos' %}
+        <!-- Detalle de Producto -->
+        <div class="detail-grid">
+            <div class="detail-section">
+                <div class="detail-image">
+                    {% if objeto.imagen %}
+                    <img src="{{ objeto.imagen.url }}" alt="{{ objeto.nombre }}">
+                    {% else %}
+                    <div class="no-image">
+                        <i class="fas fa-image fa-5x"></i>
+                        <p>Sin imagen</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div class="detail-section">
+                <h3><i class="fas fa-box"></i> Información del Producto</h3>
+                <div class="detail-info">
+                    <div class="info-row">
+                        <span class="info-label">Nombre:</span>
+                        <span class="info-value">{{ objeto.nombre }}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Descripción:</span>
+                        <span class="info-value">{{ objeto.descripcion|linebreaks }}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Precio:</span>
+                        <span class="info-value">${{ objeto.precio }}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Stock:</span>
+                        <span class="info-value">
+                            <span class="stock-badge {% if objeto.stock < 5 %}badge-danger{% elif objeto.stock < 10 %}badge-warning{% else %}badge-success{% endif %}">
+                                {{ objeto.stock }} unidades
+                            </span>
+                        </span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Tipo:</span>
+                        <span class="info-value">
+                            <span class="badge badge-category">{{ objeto.get_tipo_display }}</span>
+                        </span>
+                    </div>
+                    {% if objeto.categoria %}
+                    <div class="info-row">
+                        <span class="info-label">Categoría:</span>
+                        <span class="info-value">{{ objeto.categoria.nombre }}</span>
+                    </div>
+                    {% endif %}
+                    {% if objeto.artista %}
+                    <div class="info-row">
+                        <span class="info-label">Artista:</span>
+                        <span class="info-value">{{ objeto.artista.nombre }}</span>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div class="detail-section">
+                <h3><i class="fas fa-cog"></i> Configuración</h3>
+                <div class="detail-info">
+                    <div class="info-row">
+                        <span class="info-label">Estado:</span>
+                        <span class="info-value">
+                            <span class="status-badge status-{% if objeto.activo %}activo{% else %}inactivo{% endif %}">
+                                {% if objeto.activo %}Activo{% else %}Inactivo{% endif %}
+                            </span>
+                        </span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Destacado:</span>
+                        <span class="info-value">
+                            {% if objeto.destacado %}
+                            <span class="badge badge-highlight"><i class="fas fa-star"></i> Sí</span>
+                            {% else %}
+                            <span class="badge badge-secondary">No</span>
+                            {% endif %}
+                        </span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Fecha Creación:</span>
+                        <span class="info-value">{{ objeto.fecha_creacion|date:"d/m/Y H:i" }}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Última Actualización:</span>
+                        <span class="info-value">{{ objeto.fecha_actualizacion|date:"d/m/Y H:i" }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {% elif modelo == 'artistas' %}
+        <!-- Detalle de Artista -->
+        <div class="detail-grid">
+            <div class="detail-section">
+                <div class="detail-image">
+                    {% if objeto.foto %}
+                    <img src="{{ objeto.foto.url }}" alt="{{ objeto.nombre }}" class="artist-photo">
+                    {% else %}
+                    <div class="no-image">
+                        <i class="fas fa-user-circle fa-5x"></i>
+                        <p>Sin foto</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div class="detail-section">
+                <h3><i class="fas fa-user"></i> Información del Artista</h3>
+                <div class="detail-info">
+                    <div class="info-row">
+                        <span class="info-label">Nombre:</span>
+                        <span class="info-value">{{ objeto.nombre }}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Usuario:</span>
+                        <span class="info-value">{{ objeto.usuario.username }}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Email:</span>
+                        <span class="info-value">{{ objeto.usuario.email }}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Especialidad:</span>
+                        <span class="info-value">{{ objeto.especialidad }}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Estado:</span>
+                        <span class="info-value">
+                            <span class="status-badge status-{% if objeto.activo %}activo{% else %}inactivo{% endif %}">
+                                {% if objeto.activo %}Activo{% else %}Inactivo{% endif %}
+                            </span>
+                        </span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="detail-section">
+                <h3><i class="fas fa-file-alt"></i> Biografía</h3>
+                <div class="detail-info">
+                    <div class="info-row full-width">
+                        <span class="info-value">{{ objeto.biografia|linebreaks }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {% elif modelo == 'usuarios' %}
+        <!-- Detalle de Usuario -->
+        <div class="detail-grid">
+            <div class="detail-section">
+                <div class="detail-image">
+                    <div class="no-image">
+                        <i class="fas fa-user-circle fa-2x"></i>
+                        <p>Sin avatar</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="detail-section">
+                <h3><i class="fas fa-user"></i> Información de Usuario</h3>
+                <div class="detail-info">
+                    <div class="info-row">
+                        <span class="info-label">Username:</span>
+                        <span class="info-value">{{ objeto.username }}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Email:</span>
+                        <span class="info-value">{{ objeto.email }}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Nombre:</span>
+                        <span class="info-value">{{ objeto.get_full_name|default:"No especificado" }}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Fecha Registro:</span>
+                        <span class="info-value">{{ objeto.date_joined|date:"d/m/Y H:i" }}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Último Acceso:</span>
+                        <span class="info-value">{{ objeto.last_login|date:"d/m/Y H:i"|default:"Nunca" }}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Estado:</span>
+                        <span class="info-value">
+                            <span class="status-badge status-{% if objeto.is_active %}activo{% else %}inactivo{% endif %}">
+                                {% if objeto.is_active %}Activo{% else %}Inactivo{% endif %}
+                            </span>
+                        </span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="detail-section">
+                <h3><i class="fas fa-shield-alt"></i> Permisos y Roles</h3>
+                <div class="detail-info">
+                    <div class="info-row">
+                        <span class="info-label">Tipo de Usuario:</span>
+                        <span class="info-value">
+                            {% if objeto.is_superuser %}
+                            <span class="badge badge-danger">Super Administrador</span>
+                            {% elif objeto.is_staff %}
+                            <span class="badge badge-warning">Staff/Administrador</span>
+                            {% else %}
+                            <span class="badge badge-info">Cliente</span>
+                            {% endif %}
+                        </span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Grupos:</span>
+                        <span class="info-value">
+                            {% for group in objeto.groups.all %}
+                            <span class="badge badge-group">{{ group.name }}</span>
+                            {% empty %}
+                            <span class="text-muted">Sin grupos asignados</span>
+                            {% endfor %}
+                        </span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Permisos:</span>
+                        <span class="info-value">
+                            {% if objeto.user_permissions.exists %}
+                            <span class="badge badge-success">{{ objeto.user_permissions.count }} permiso(s)</span>
+                            {% else %}
+                            <span class="text-muted">Permisos por defecto</span>
+                            {% endif %}
+                        </span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="detail-section full-width">
+                <h3><i class="fas fa-chart-bar"></i> Estadísticas del Usuario</h3>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-shopping-bag"></i>
+                        </div>
+                        <div class="stat-content">
+                            <h4>{{ pedidos_count }}</h4>
+                            <p>Pedidos Realizados</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-star"></i>
+                        </div>
+                        <div class="stat-content">
+                            <h4>{{ encargos_count }}</h4>
+                            <p>Encargos Solicitados</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-calendar-alt"></i>
+                        </div>
+                        <div class="stat-content">
+                            <h4>{{ dias_registro }}</h4>
+                            <p>Días Registrado</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-money-bill-wave"></i>
+                        </div>
+                        <div class="stat-content">
+                            <h4>${{ total_gastado }}</h4>
+                            <p>Total Gastado</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {% elif modelo == 'pedidos' %}
+        <!-- Detalle de Pedido -->
+        <div class="detail-grid">
+            <div class="detail-section">
+                <h3><i class="fas fa-shopping-bag"></i> Información del Pedido</h3>
+                <div class="detail-info">
+                    <div class="info-row">
+                        <span class="info-label">N° Pedido:</span>
+                        <span class="info-value"><strong>#{{ objeto.numero_pedido }}</strong></span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Cliente:</span>
+                        <span class="info-value">
+                            {{ objeto.usuario.get_full_name|default:objeto.usuario.username }}
+                            <small class="text-muted">({{ objeto.usuario.email }})</small>
+                        </span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Fecha:</span>
+                        <span class="info-value">{{ objeto.fecha_pedido|date:"d/m/Y H:i" }}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Estado:</span>
+                        <span class="info-value">
+                            <span class="status-badge status-{{ objeto.estado }}">
+                                {{ objeto.get_estado_display }}
+                            </span>
+                        </span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Método Pago:</span>
+                        <span class="info-value">
+                            <span class="badge badge-payment">
+                                {{ objeto.get_metodo_pago_display }}
+                            </span>
+                        </span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Notas:</span>
+                        <span class="info-value">{{ objeto.notas|default:"Sin notas" }}</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="detail-section">
+                <h3><i class="fas fa-truck"></i> Información de Envío</h3>
+                <div class="detail-info">
+                    <div class="info-row full-width">
+                        <span class="info-value">{{ objeto.direccion_envio|linebreaks }}</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="detail-section full-width">
+                <h3><i class="fas fa-receipt"></i> Detalle de la Compra</h3>
+                <div class="table-responsive-wrapper">
+                    <div class="table-responsive">
+                        <table class="order-details">
+                            <thead>
+                                <tr>
+                                    <th>Producto</th>
+                                    <th>Cantidad</th>
+                                    <th>Precio Unitario</th>
+                                    <th>Subtotal</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for item in objeto.items.all %}
+                                <tr>
+                                    <td>
+                                        <strong>{{ item.producto.nombre }}</strong>
+                                        <small class="text-muted d-block">{{ item.producto.get_tipo_display }}</small>
+                                    </td>
+                                    <td>{{ item.cantidad }}</td>
+                                    <td>${{ item.precio_unitario }}</td>
+                                    <td>${{ item.subtotal }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                            <tfoot>
+                                <tr>
+                                    <td colspan="3" class="text-right"><strong>Subtotal:</strong></td>
+                                    <td><strong>${{ objeto.subtotal }}</strong></td>
+                                </tr>
+                                <tr>
+                                    <td colspan="3" class="text-right"><strong>IVA (16%):</strong></td>
+                                    <td><strong>${{ objeto.iva }}</strong></td>
+                                </tr>
+                                <tr class="total-row">
+                                    <td colspan="3" class="text-right"><strong>TOTAL:</strong></td>
+                                    <td><strong class="total-amount">${{ objeto.total }}</strong></td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {% elif modelo == 'encargos' %}
+        <!-- Detalle de Encargo -->
+        <div class="detail-grid">
+            <div class="detail-section">
+                <h3><i class="fas fa-star"></i> Información del Encargo</h3>
+                <div class="detail-info">
+                    <div class="info-row">
+                        <span class="info-label">Cliente:</span>
+                        <span class="info-value">
+                            {{ objeto.cliente.get_full_name|default:objeto.cliente.username }}
+                            <small class="text-muted">({{ objeto.cliente.email }})</small>
+                        </span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Tipo de Obra:</span>
+                        <span class="info-value">
+                            <span class="badge badge-encargo">{{ objeto.get_tipo_obra_display }}</span>
+                        </span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Estado:</span>
+                        <span class="info-value">
+                            <span class="status-badge status-{{ objeto.estado }}">
+                                {{ objeto.get_estado_display }}
+                            </span>
+                        </span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Artista Preferido:</span>
+                        <span class="info-value">
+                            {% if objeto.artista_preferido %}
+                            {{ objeto.artista_preferido.nombre }}
+                            {% else %}
+                            <span class="text-muted">No especificado</span>
+                            {% endif %}
+                        </span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Dimensiones:</span>
+                        <span class="info-value">{{ objeto.dimensiones|default:"No especificadas" }}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Presupuesto Máximo:</span>
+                        <span class="info-value">
+                            {% if objeto.presupuesto_maximo %}
+                            ${{ objeto.presupuesto_maximo }}
+                            {% else %}
+                            <span class="text-muted">No especificado</span>
+                            {% endif %}
+                        </span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Fecha Entrega Estimada:</span>
+                        <span class="info-value">
+                            {% if objeto.fecha_entrega_estimada %}
+                            {{ objeto.fecha_entrega_estimada|date:"d/m/Y" }}
+                            {% else %}
+                            <span class="text-muted">No especificada</span>
+                            {% endif %}
+                        </span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Fecha Solicitud:</span>
+                        <span class="info-value">{{ objeto.fecha_solicitud|date:"d/m/Y H:i" }}</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="detail-section full-width">
+                <h3><i class="fas fa-file-alt"></i> Descripción del Encargo</h3>
+                <div class="detail-info">
+                    <div class="info-row full-width">
+                        <div class="description-box">
+                            {{ objeto.descripcion|linebreaks }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {% elif modelo == 'categorias' %}
+        <!-- Detalle de Categoría -->
+        <div class="detail-grid">
+            <div class="detail-section">
+                <h3><i class="fas fa-tag"></i> Información de la Categoría</h3>
+                <div class="detail-info">
+                    <div class="info-row">
+                        <span class="info-label">Nombre:</span>
+                        <span class="info-value">{{ objeto.nombre }}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Slug:</span>
+                        <span class="info-value">{{ objeto.slug }}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Productos en esta categoría:</span>
+                        <span class="info-value">
+                            {{ objeto.producto_set.count }} productos
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {% else %}
+        <!-- Detalle Genérico Simplificado -->
+        <div class="detail-grid">
+            <div class="detail-section">
+                <h3><i class="fas fa-info-circle"></i> Información General</h3>
+                <div class="detail-info">
+                    <div class="info-row">
+                        <span class="info-label">ID:</span>
+                        <span class="info-value">{{ objeto.id }}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Representación:</span>
+                        <span class="info-value">{{ objeto }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Historial de Cambios -->
+    {% if modelo in historial_models %}
+    <div class="history-section">
+        <h3><i class="fas fa-history"></i> Historial de Cambios</h3>
+        <div class="history-timeline">
+            <div class="history-item">
+                <div class="history-date">Hoy, 10:30</div>
+                <div class="history-content">
+                    <strong>Estado actualizado</strong>
+                    <p>El estado fue cambiado a "Procesando" por el administrador</p>
+                </div>
+            </div>
+            <div class="history-item">
+                <div class="history-date">Ayer, 15:45</div>
+                <div class="history-content">
+                    <strong>Pedido creado</strong>
+                    <p>El pedido fue realizado por el cliente</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Notas y Comentarios -->
+    <div class="notes-section">
+        <h3><i class="fas fa-sticky-note"></i> Notas Internas</h3>
+        <form class="notes-form">
+            <textarea placeholder="Agregar una nota interna..."></textarea>
+            <button type="submit" class="btn-add-note">
+                <i class="fas fa-plus"></i> Agregar Nota
+            </button>
+        </form>
+        
+        <div class="notes-list">
+            <div class="note">
+                <div class="note-header">
+                    <strong>Administrador</strong>
+                    <span class="note-date">Hoy, 11:20</span>
+                </div>
+                <div class="note-content">
+                    Se contactó al cliente para confirmar detalles del pedido.
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+/* Estilos para tablas responsive */
+.table-responsive-wrapper {
+    overflow-x: auto;
+    margin: 15px 0;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    background: white;
+}
+
+.table-responsive {
+    min-width: 100%;
+    overflow-x: auto;
+}
+
+.order-details {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+}
+
+.order-details thead {
+    background-color: #f8f9fa;
+    border-bottom: 2px solid #dee2e6;
+}
+
+.order-details th {
+    padding: 12px 15px;
+    text-align: left;
+    font-weight: 600;
+    color: #495057;
+    white-space: nowrap;
+}
+
+.order-details td {
+    padding: 10px 15px;
+    border-bottom: 1px solid #e0e0e0;
+    vertical-align: top;
+}
+
+.order-details tbody tr:hover {
+    background-color: #f8f9fa;
+}
+
+.order-details tfoot {
+    background-color: #f8f9fa;
+    border-top: 2px solid #dee2e6;
+}
+
+.order-details tfoot td {
+    padding: 12px 15px;
+    font-weight: 600;
+}
+
+.total-row {
+    background-color: #e8f5e8 !important;
+}
+
+.total-amount {
+    color: #28a745;
+    font-size: 1.2em;
+}
+
+/* Ajustes para pantallas pequeñas */
+@media (max-width: 768px) {
+    .table-responsive-wrapper {
+        margin-left: -15px;
+        margin-right: -15px;
+        border-radius: 0;
+        border-left: none;
+        border-right: none;
+    }
+    
+    .order-details {
+        font-size: 13px;
+    }
+    
+    .order-details th,
+    .order-details td {
+        padding: 8px 10px;
+    }
+}
+
+/* Para pantallas muy pequeñas (móviles) */
+@media (max-width: 480px) {
+    .order-details {
+        min-width: 600px; /* Fuerza scroll horizontal en móviles */
+    }
+    
+    .detail-actions {
+        flex-direction: column;
+        gap: 5px;
+    }
+    
+    .detail-actions a,
+    .detail-actions button {
+        width: 100%;
+        text-align: center;
+    }
+}
+
+/* Estilos generales para secciones */
+.detail-section.full-width {
+    grid-column: 1 / -1;
+}
+
+.description-box {
+    background: #f8f9fa;
+    padding: 15px;
+    border-radius: 6px;
+    border-left: 4px solid #007bff;
+}
+
+.d-block {
+    display: block;
+}
+
+.text-right {
+    text-align: right;
+}
+
+.text-muted {
+    color: #6c757d !important;
+}
+</style>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Imprimir detalles
+function printDetails() {
+    window.print();
+}
+
+// Cambiar estado (para pedidos y encargos)
+{% if modelo in 'pedidos,encargos' %}
+function changeStatus(newStatus) {
+    if (confirm(`¿Cambiar estado a "${newStatus}"?`)) {
+        fetch(`/api/${'{{ modelo }}'}/${'{{ objeto.id }}'}/status/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token }}'
+            },
+            body: JSON.stringify({ status: newStatus })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            }
+        });
+    }
+}
+{% endif %}
+
+// Expandir descripciones largas
+document.querySelectorAll('.info-value').forEach(elem => {
+    if (elem.textContent.length > 200) {
+        const shortText = elem.textContent.substring(0, 200) + '...';
+        const fullText = elem.textContent;
+        
+        elem.textContent = shortText;
+        elem.style.cursor = 'pointer';
+        
+        elem.addEventListener('click', function() {
+            if (this.textContent === shortText) {
+                this.textContent = fullText;
+            } else {
+                this.textContent = shortText;
+            }
+        });
+    }
+});
+
+// Ajustar tabla en pantallas pequeñas
+function adjustTable() {
+    const tableWrapper = document.querySelector('.table-responsive-wrapper');
+    const table = document.querySelector('.order-details');
+    
+    if (tableWrapper && table) {
+        const wrapperWidth = tableWrapper.clientWidth;
+        const tableWidth = table.scrollWidth;
+        
+        if (tableWidth > wrapperWidth) {
+            tableWrapper.style.overflowX = 'scroll';
+        } else {
+            tableWrapper.style.overflowX = 'hidden';
+        }
+    }
+}
+
+// Ejecutar al cargar y al redimensionar
+window.addEventListener('load', adjustTable);
+window.addEventListener('resize', adjustTable);
+</script>
+{% endblock %}

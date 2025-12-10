@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+{% load static %}
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel Admin - ArtStore | {% block title %}Dashboard{% endblock %}</title>
+    <link rel="stylesheet" href="{% static 'css/admin.css' %}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="admin-body">
+    <!-- Header Admin -->
+    <header class="admin-header">
+        <div class="admin-header-content">
+            <div class="admin-logo">
+                <a href="{% url 'panel_admin' %}">
+                    <img src="{% static 'images/logo.png' %}" alt="ArtStore Admin">
+                    <h1>ArtStore <span class="admin-badge">Admin</span></h1>
+                </a>
+            </div>
+            
+            <div class="admin-user-info">
+                <div class="user-dropdown">
+                    <button class="user-toggle">
+                        <i class="fas fa-user-circle"></i>
+                        <span>{{ user.get_full_name|default:user.username }}</span>
+                        <i class="fas fa-chevron-down"></i>
+                    </button>
+                    <div class="user-menu">
+                        <a href="{% url 'index' %}" target="_blank">
+                            <i class="fas fa-external-link-alt"></i> Ver Sitio
+                        </a>
+                        <a href="{% url 'logout' %}">
+                            <i class="fas fa-sign-out-alt"></i> Cerrar Sesión
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Sidebar Admin -->
+    <div class="admin-container">
+        <nav class="admin-sidebar">
+            <div class="sidebar-header">
+                <h3><i class="fas fa-tachometer-alt"></i> Panel de Control</h3>
+            </div>
+            
+            <ul class="sidebar-menu">
+                <li class="menu-item {% if request.path == '/admin/panel/' %}active{% endif %}">
+                    <a href="{% url 'panel_admin' %}">
+                        <i class="fas fa-home"></i>
+                        <span>Dashboard</span>
+                    </a>
+                </li>
+                
+                <li class="menu-section">
+                    <span><i class="fas fa-box"></i> Gestión de Productos</span>
+                </li>
+                <li class="menu-item {% if 'productos' in request.path %}active{% endif %}">
+                    <a href="{% url 'crud_lista' 'productos' %}">
+                        <i class="fas fa-palette"></i>
+                        <span>Productos</span>
+                    </a>
+                </li>
+                <li class="menu-item {% if 'usuarios' in request.path %}active{% endif %}">
+                    <a href="{% url 'crud_lista' 'usuarios' %}">
+                        <i class="fas fa-user-circle"></i>
+                        <span>Usuarios</span>
+                    </a>
+                </li>
+                <li class="menu-item {% if 'categorias' in request.path %}active{% endif %}">
+                    <a href="{% url 'crud_lista' 'categorias' %}">
+                        <i class="fas fa-tags"></i>
+                        <span>Categorías</span>
+                    </a>
+                </li>
+                
+                <li class="menu-section">
+                    <span><i class="fas fa-users"></i> Gestión de Personas</span>
+                </li>
+                <li class="menu-item {% if 'artistas' in request.path %}active{% endif %}">
+                    <a href="{% url 'crud_lista' 'artistas' %}">
+                        <i class="fas fa-paint-brush"></i>
+                        <span>Artistas</span>
+                    </a>
+                </li>
+                
+                <li class="menu-section">
+                    <span><i class="fas fa-shopping-cart"></i> Gestión de Ventas</span>
+                </li>
+                <li class="menu-item {% if 'pedidos' in request.path %}active{% endif %}">
+                    <a href="{% url 'crud_lista' 'pedidos' %}">
+                        <i class="fas fa-shopping-bag"></i>
+                        <span>Pedidos</span>
+                        {% if pedidos_pendientes > 0 %}
+                        <span class="badge badge-danger">{{ pedidos_pendientes }}</span>
+                        {% endif %}
+                    </a>
+                </li>
+                
+                <li class="menu-section">
+                    <span><i class="fas fa-tools"></i> Servicios</span>
+                </li>
+                <li class="menu-item {% if 'encargos' in request.path %}active{% endif %}">
+                    <a href="{% url 'crud_lista' 'encargos' %}">
+                        <i class="fas fa-star"></i>
+                        <span>Encargos</span>
+                        {% if encargos_pendientes > 0 %}
+                        <span class="badge badge-warning">{{ encargos_pendientes }}</span>
+                        {% endif %}
+                    </a>
+                </li>
+                
+            
+            <div class="sidebar-footer">
+                <div class="system-info">
+                    <p><i class="fas fa-server"></i> Sistema ArtStore v1.0</p>
+                    <p><i class="fas fa-user"></i> {{ user.username }}</p>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Contenido Principal -->
+        <main class="admin-main">
+            <div class="admin-content">
+                <!-- Breadcrumbs -->
+                <nav class="breadcrumbs">
+                    <ol>
+                        <li><a href="{% url 'panel_admin' %}"><i class="fas fa-home"></i></a></li>
+                        {% block breadcrumbs %}{% endblock %}
+                    </ol>
+                </nav>
+
+                <!-- Mensajes -->
+                {% if messages %}
+                <div class="admin-messages">
+                    {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }}">
+                        <i class="fas 
+                            {% if message.tags == 'success' %}fa-check-circle
+                            {% elif message.tags == 'error' %}fa-exclamation-circle
+                            {% elif message.tags == 'warning' %}fa-exclamation-triangle
+                            {% else %}fa-info-circle{% endif %}"></i>
+                        {{ message }}
+                        <button class="alert-close">&times;</button>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+
+                <!-- Contenido -->
+                {% block content %}{% endblock %}
+            </div>
+            
+            <!-- Footer Admin -->
+            <footer class="admin-footer">
+                <p>&copy; {% now "Y" %} ArtStore - Panel Administrativo</p>
+                <p>Garcia Galaviz Melanie Elizabeth - 5-I - 0583</p>
+                <p>M.E.E. Leticia Meza Díaz - Construye Aplicaciones WEB</p>
+                <p class="timestamp"><i class="fas fa-clock"></i> Último acceso: {% now "d/m/Y H:i" %}</p>
+            </footer>
+        </main>
+    </div>
+
+    <script src="{% static 'js/admin.js' %}"></script>
+    {% block scripts %}{% endblock %}
+</body>
+</html>

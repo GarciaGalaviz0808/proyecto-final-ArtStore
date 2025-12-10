@@ -1,0 +1,121 @@
+{% extends 'cliente/base.html' %}
+{% load static %}
+
+{% block title %}Cerrando Sesión - ArtStore{% endblock %}
+
+{% block content %}
+<div class="logout-container">
+    <div class="logout-card">
+        <div class="logout-icon">
+            <i class="fas fa-sign-out-alt fa-4x"></i>
+        </div>
+        
+        <h2>Cerrando Sesión</h2>
+        
+        <div class="logout-message">
+            <div class="spinner">
+                <div class="bounce1"></div>
+                <div class="bounce2"></div>
+                <div class="bounce3"></div>
+            </div>
+            
+            <p>Estamos cerrando tu sesión de forma segura...</p>
+        </div>
+        
+        <div class="logout-info">
+            <p><i class="fas fa-info-circle"></i> Serás redirigido automáticamente a la página de inicio</p>
+        </div>
+        
+        <div class="logout-redirect">
+            <p>Si la redirección no funciona, haz clic en el siguiente enlace:</p>
+            <a href="{% url 'index' %}" class="btn-logout-redirect">
+                <i class="fas fa-home"></i> Volver al Inicio
+            </a>
+        </div>
+        
+        <div class="logout-security">
+            <h4><i class="fas fa-shield-alt"></i> Seguridad de tu sesión</h4>
+            <ul>
+                <li><i class="fas fa-check-circle"></i> Tus datos han sido protegidos</li>
+                <li><i class="fas fa-check-circle"></i> Cookies de sesión eliminadas</li>
+                <li><i class="fas fa-check-circle"></i> Conexión cerrada de forma segura</li>
+            </ul>
+        </div>
+    </div>
+    
+    <div class="logout-sidebar">
+        <h3>¿Por qué cerrar sesión?</h3>
+        <div class="reason">
+            <h4><i class="fas fa-laptop-house"></i> En computadoras compartidas</h4>
+            <p>Protege tu información personal cuando uses computadoras públicas o compartidas.</p>
+        </div>
+        
+        <div class="reason">
+            <h4><i class="fas fa-sync-alt"></i> Para cambiar de cuenta</h4>
+            <p>Si necesitas acceder con una cuenta diferente de ArtStore.</p>
+        </div>
+        
+        <div class="reason">
+            <h4><i class="fas fa-broom"></i> Para limpiar preferencias</h4>
+            <p>Si deseas comenzar con una nueva sesión limpia.</p>
+        </div>
+        
+        <div class="return-options">
+            <h4>¿Regresarás pronto?</h4>
+            <a href="{% url 'login' %}" class="btn-return-login">
+                <i class="fas fa-sign-in-alt"></i> Iniciar sesión nuevamente
+            </a>
+        </div>
+        
+        <div class="logout-tips">
+            <h4><i class="fas fa-lightbulb"></i> Consejos de seguridad</h4>
+            <ul>
+                <li>Nunca compartas tu contraseña</li>
+                <li>Usa contraseñas diferentes para cada sitio</li>
+                <li>Activa la autenticación de dos factores si está disponible</li>
+                <li>Cierra siempre sesión en dispositivos compartidos</li>
+            </ul>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Redirección automática después de 3 segundos
+setTimeout(function() {
+    window.location.href = "{% url 'index' %}";
+}, 3000);
+
+// Mostrar contador de redirección
+let countdown = 3;
+const countdownElement = document.createElement('p');
+countdownElement.className = 'countdown';
+countdownElement.innerHTML = `Redireccionando en <span id="countdown-number">${countdown}</span> segundos...`;
+document.querySelector('.logout-message').appendChild(countdownElement);
+
+const countdownInterval = setInterval(function() {
+    countdown--;
+    document.getElementById('countdown-number').textContent = countdown;
+    
+    if (countdown <= 0) {
+        clearInterval(countdownInterval);
+    }
+}, 1000);
+
+// Animación de salida
+document.body.classList.add('logout-page');
+
+// Mostrar mensaje de despedida después de 1 segundo
+setTimeout(function() {
+    const message = document.createElement('div');
+    message.className = 'goodbye-message';
+    message.innerHTML = `
+        <i class="fas fa-heart"></i>
+        <h3>¡Esperamos verte pronto!</h3>
+        <p>Gracias por visitar ArtStore. Tu creatividad nos inspira.</p>
+    `;
+    document.querySelector('.logout-card').appendChild(message);
+}, 1000);
+</script>
+{% endblock %}

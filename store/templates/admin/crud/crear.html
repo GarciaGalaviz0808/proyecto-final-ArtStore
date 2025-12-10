@@ -1,0 +1,456 @@
+{% extends 'admin/base_admin.html' %}
+
+{% block title %}Crear {{ titulo }} - ArtStore Admin{% endblock %}
+
+{% block breadcrumbs %}
+<li><a href="{% url 'crud_lista' modelo %}">{{ modelo|capfirst }}</a></li>
+<li class="active">Crear</li>
+{% endblock %}
+
+{% block content %}
+<div class="create-container">
+    <div class="create-header">
+        <h2><i class="fas fa-plus-circle"></i> Crear {{ titulo }}</h2>
+        <a href="{% url 'crud_lista' modelo %}" class="btn-back">
+            <i class="fas fa-arrow-left"></i> Cancelar
+        </a>
+    </div>
+
+    <div class="create-content">
+        <form method="POST" enctype="multipart/form-data" class="create-form" id="createForm">
+            {% csrf_token %}
+            
+            <div class="form-header">
+                <div class="form-steps">
+                    <div class="step active" data-step="1">
+                        <span class="step-number">1</span>
+                        <span class="step-label">Información Básica</span>
+                    </div>
+                    <div class="step" data-step="2">
+                        <span class="step-number">2</span>
+                        <span class="step-label">Detalles</span>
+                    </div>
+                    <div class="step" data-step="3">
+                        <span class="step-number">3</span>
+                        <span class="step-label">Configuración</span>
+                    </div>
+                </div>
+                
+                <div class="form-preview">
+                    <h4>Vista Previa</h4>
+                    <div id="formPreview" class="preview-content">
+                        <!-- La vista previa se actualizará dinámicamente -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Paso 1: Información Básica -->
+            <div class="form-step active" id="step1">
+                <h3><i class="fas fa-info-circle"></i> Información Básica</h3>
+                
+                <div class="form-grid">
+                    {% for field in form %}
+                        {% if field.name in basic_fields %}
+                        <div class="form-group {% if field.errors %}has-error{% endif %}">
+                            <label for="{{ field.id_for_label }}">
+                                {{ field.label }}
+                                {% if field.field.required %}<span class="required">*</span>{% endif %}
+                            </label>
+                            
+                            {% if field.name == 'imagen' or field.name == 'foto' %}
+                            <div class="file-upload">
+                                <input type="file" name="{{ field.name }}" id="{{ field.id_for_label }}" 
+                                       accept="image/*" onchange="previewImage(this)">
+                                <label for="{{ field.id_for_label }}" class="upload-label">
+                                    <i class="fas fa-cloud-upload-alt"></i>
+                                    <span>Subir imagen</span>
+                                </label>
+                                <div class="image-preview" id="imagePreview">
+                                    <img id="previewImage" src="" alt="Vista previa">
+                                    <span class="no-preview">No hay imagen seleccionada</span>
+                                </div>
+                            </div>
+                            {% else %}
+                            {{ field }}
+                            {% endif %}
+                            
+                            {% if field.help_text %}
+                            <small class="form-text">{{ field.help_text }}</small>
+                            {% endif %}
+                            
+                            {% if field.errors %}
+                            <div class="error-message">
+                                {% for error in field.errors %}
+                                <p><i class="fas fa-exclamation-circle"></i> {{ error }}</p>
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                        </div>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+                
+                <div class="form-navigation">
+                    <button type="button" class="btn-next" onclick="nextStep()">
+                        Siguiente <i class="fas fa-arrow-right"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Paso 2: Detalles -->
+            <div class="form-step" id="step2">
+                <h3><i class="fas fa-clipboard-list"></i> Detalles</h3>
+                
+                <div class="form-grid">
+                    {% for field in form %}
+                        {% if field.name in detail_fields %}
+                        <div class="form-group {% if field.errors %}has-error{% endif %}">
+                            <label for="{{ field.id_for_label }}">
+                                {{ field.label }}
+                                {% if field.field.required %}<span class="required">*</span>{% endif %}
+                            </label>
+                            
+                            {{ field }}
+                            
+                            {% if field.help_text %}
+                            <small class="form-text">{{ field.help_text }}</small>
+                            {% endif %}
+                            
+                            {% if field.errors %}
+                            <div class="error-message">
+                                {% for error in field.errors %}
+                                <p><i class="fas fa-exclamation-circle"></i> {{ error }}</p>
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                        </div>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+                
+                <div class="form-navigation">
+                    <button type="button" class="btn-prev" onclick="prevStep()">
+                        <i class="fas fa-arrow-left"></i> Anterior
+                    </button>
+                    <button type="button" class="btn-next" onclick="nextStep()">
+                        Siguiente <i class="fas fa-arrow-right"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Paso 3: Configuración -->
+            <div class="form-step" id="step3">
+                <h3><i class="fas fa-cog"></i> Configuración</h3>
+                
+                <div class="form-grid">
+                    {% for field in form %}
+                        {% if field.name in config_fields %}
+                        <div class="form-group {% if field.errors %}has-error{% endif %}">
+                            <label for="{{ field.id_for_label }}">
+                                {{ field.label }}
+                                {% if field.field.required %}<span class="required">*</span>{% endif %}
+                            </label>
+                            
+                            {% if field.field.widget.input_type == 'checkbox' %}
+                            <div class="checkbox-container">
+                                {{ field }}
+                                <label for="{{ field.id_for_label }}" class="checkbox-label"></label>
+                                <span class="checkbox-text">{{ field.label }}</span>
+                            </div>
+                            {% else %}
+                            {{ field }}
+                            {% endif %}
+                            
+                            {% if field.help_text %}
+                            <small class="form-text">{{ field.help_text }}</small>
+                            {% endif %}
+                            
+                            {% if field.errors %}
+                            <div class="error-message">
+                                {% for error in field.errors %}
+                                <p><i class="fas fa-exclamation-circle"></i> {{ error }}</p>
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                        </div>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+                
+                <div class="form-summary">
+                    <h4>Resumen</h4>
+                    <div id="formSummary" class="summary-content">
+                        <!-- El resumen se actualizará dinámicamente -->
+                    </div>
+                </div>
+                
+                <div class="form-navigation">
+                    <button type="button" class="btn-prev" onclick="prevStep()">
+                        <i class="fas fa-arrow-left"></i> Anterior
+                    </button>
+                    <button type="submit" class="btn-submit">
+                        <i class="fas fa-check"></i> Crear {{ titulo }}
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <!-- Plantillas para diferentes modelos -->
+    <div class="form-templates">
+        {% if modelo == 'productos' %}
+        <div class="template-info">
+            <h4><i class="fas fa-lightbulb"></i> Consejos para productos</h4>
+            <ul>
+                <li>Usa imágenes de alta calidad (mínimo 800x600px)</li>
+                <li>Describe claramente las características del producto</li>
+                <li>Establece un precio competitivo</li>
+                <li>Controla el stock regularmente</li>
+                <li>Destaca los productos más importantes</li>
+            </ul>
+        </div>
+        {% endif %}
+        
+        {% if modelo == 'artistas' %}
+        <div class="template-info">
+            <h4><i class="fas fa-lightbulb"></i> Consejos para artistas</h4>
+            <ul>
+                <li>Incluye una biografía interesante</li>
+                <li>Especifica bien la especialidad</li>
+                <li>Usa una foto profesional</li>
+                <li>Vincula con un usuario existente si es necesario</li>
+            </ul>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let currentStep = 1;
+const totalSteps = 3;
+
+// Configurar campos por modelo
+const fieldConfig = {
+    'productos': {
+        basic: ['nombre', 'tipo', 'categoria', 'imagen'],
+        detail: ['descripcion', 'precio', 'stock', 'artista'],
+        config: ['destacado', 'activo']
+    },
+    'artistas': {
+        basic: ['nombre', 'especialidad', 'foto'],
+        detail: ['biografia'],
+        config: ['activo']
+    },
+    'categorias': {
+        basic: ['nombre', 'slug'],
+        detail: [],
+        config: []
+    },
+    'encargos': {
+        basic: ['tipo_obra', 'artista_preferido'],
+        detail: ['descripcion', 'dimensiones', 'presupuesto_maximo', 'fecha_entrega_estimada'],
+        config: []
+    }
+};
+
+// Navegación entre pasos
+function nextStep() {
+    if (validateStep(currentStep)) {
+        document.getElementById(`step${currentStep}`).classList.remove('active');
+        document.querySelector(`.step[data-step="${currentStep}"]`).classList.remove('active');
+        
+        currentStep++;
+        
+        document.getElementById(`step${currentStep}`).classList.add('active');
+        document.querySelector(`.step[data-step="${currentStep}"]`).classList.add('active');
+        
+        updatePreview();
+        updateSummary();
+    }
+}
+
+function prevStep() {
+    document.getElementById(`step${currentStep}`).classList.remove('active');
+    document.querySelector(`.step[data-step="${currentStep}"]`).classList.remove('active');
+    
+    currentStep--;
+    
+    document.getElementById(`step${currentStep}`).classList.add('active');
+    document.querySelector(`.step[data-step="${currentStep}"]`).classList.add('active');
+}
+
+// Validación de paso
+function validateStep(step) {
+    let isValid = true;
+    const config = fieldConfig['{{ modelo }}'];
+    let fields = [];
+    
+    if (step === 1) fields = config.basic || [];
+    else if (step === 2) fields = config.detail || [];
+    else fields = config.config || [];
+    
+    fields.forEach(fieldName => {
+        const field = document.querySelector(`[name="${fieldName}"]`);
+        if (field && field.hasAttribute('required') && !field.value.trim()) {
+            field.classList.add('error');
+            isValid = false;
+            
+            // Mostrar mensaje de error
+            const errorDiv = field.closest('.form-group').querySelector('.error-message') ||
+                            field.closest('.form-group').appendChild(createErrorElement('Este campo es requerido'));
+            errorDiv.style.display = 'block';
+        } else if (field) {
+            field.classList.remove('error');
+            const errorDiv = field.closest('.form-group')?.querySelector('.error-message');
+            if (errorDiv) errorDiv.style.display = 'none';
+        }
+    });
+    
+    if (!isValid) {
+        alert('Por favor completa todos los campos requeridos.');
+    }
+    
+    return isValid;
+}
+
+// Vista previa de imagen
+function previewImage(input) {
+    const preview = document.getElementById('previewImage');
+    const noPreview = document.querySelector('.no-preview');
+    
+    if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        
+        reader.onload = function(e) {
+            preview.src = e.target.result;
+            preview.style.display = 'block';
+            noPreview.style.display = 'none';
+        }
+        
+        reader.readAsDataURL(input.files[0]);
+    }
+}
+
+// Actualizar vista previa
+function updatePreview() {
+    const preview = document.getElementById('formPreview');
+    const config = fieldConfig['{{ modelo }}'];
+    
+    let html = '';
+    
+    if ('{{ modelo }}' === 'productos') {
+        const nombre = document.querySelector('[name="nombre"]')?.value || 'Nuevo Producto';
+        const tipo = document.querySelector('[name="tipo"]')?.value || 'No especificado';
+        const precio = document.querySelector('[name="precio"]')?.value || '0';
+        
+        html = `
+            <div class="preview-product">
+                <div class="preview-image">
+                    <img id="previewImageDisplay" src="" alt="${nombre}">
+                </div>
+                <div class="preview-info">
+                    <h5>${nombre}</h5>
+                    <p><strong>Tipo:</strong> ${tipo}</p>
+                    <p><strong>Precio:</strong> $${precio}</p>
+                </div>
+            </div>
+        `;
+    } else if ('{{ modelo }}' === 'artistas') {
+        const nombre = document.querySelector('[name="nombre"]')?.value || 'Nuevo Artista';
+        const especialidad = document.querySelector('[name="especialidad"]')?.value || 'No especificada';
+        
+        html = `
+            <div class="preview-artist">
+                <div class="preview-image">
+                    <img id="previewImageDisplay" src="" alt="${nombre}">
+                </div>
+                <div class="preview-info">
+                    <h5>${nombre}</h5>
+                    <p><strong>Especialidad:</strong> ${especialidad}</p>
+                </div>
+            </div>
+        `;
+    }
+    
+    preview.innerHTML = html;
+    
+    // Actualizar imagen de vista previa si existe
+    const imageInput = document.querySelector('input[type="file"]');
+    if (imageInput && imageInput.files[0]) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const previewImg = document.getElementById('previewImageDisplay');
+            if (previewImg) previewImg.src = e.target.result;
+        };
+        reader.readAsDataURL(imageInput.files[0]);
+    }
+}
+
+// Actualizar resumen
+function updateSummary() {
+    const summary = document.getElementById('formSummary');
+    let html = '<ul>';
+    
+    // Obtener valores de los campos
+    const fields = document.querySelectorAll('input, textarea, select');
+    fields.forEach(field => {
+        if (field.name && field.value && !field.type.includes('hidden')) {
+            const label = field.labels?.[0]?.textContent || field.name;
+            html += `<li><strong>${label}:</strong> ${field.value}</li>`;
+        }
+    });
+    
+    html += '</ul>';
+    summary.innerHTML = html;
+}
+
+// Crear elemento de error
+function createErrorElement(message) {
+    const div = document.createElement('div');
+    div.className = 'error-message';
+    div.innerHTML = `<p><i class="fas fa-exclamation-circle"></i> ${message}</p>`;
+    return div;
+}
+
+// Inicialización
+document.addEventListener('DOMContentLoaded', function() {
+    updatePreview();
+    updateSummary();
+    
+    // Actualizar en tiempo real
+    document.querySelectorAll('input, textarea, select').forEach(field => {
+        field.addEventListener('input', function() {
+            updatePreview();
+            updateSummary();
+        });
+        field.addEventListener('change', function() {
+            updatePreview();
+            updateSummary();
+        });
+    });
+});
+
+// Validación de formulario
+document.getElementById('createForm').addEventListener('submit', function(e) {
+    if (!validateStep(1) || !validateStep(2) || !validateStep(3)) {
+        e.preventDefault();
+        alert('Por favor completa todos los campos requeridos antes de enviar.');
+        return;
+    }
+    
+    // Mostrar indicador de carga
+    const submitBtn = this.querySelector('.btn-submit');
+    const originalText = submitBtn.innerHTML;
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Creando...';
+    submitBtn.disabled = true;
+    
+    // Restaurar después de 5 segundos (en caso de que el envío falle)
+    setTimeout(() => {
+        submitBtn.innerHTML = originalText;
+        submitBtn.disabled = false;
+    }, 5000);
+});
+</script>
+{% endblock %}

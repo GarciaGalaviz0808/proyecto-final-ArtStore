@@ -1,0 +1,936 @@
+{% extends 'admin/base_admin.html' %}
+
+{% block title %}Editar {{ titulo }} - ArtStore Admin{% endblock %}
+
+{% block breadcrumbs %}
+<li><a href="{% url 'crud_lista' modelo %}">{{ modelo|capfirst }}</a></li>
+<li><a href="{% url 'crud_detalle' modelo objeto.id %}">Detalle</a></li>
+<li class="active">Editar</li>
+{% endblock %}
+
+{% block content %}
+<div class="edit-container">
+    <div class="edit-header">
+        <div class="edit-title">
+            <h2><i class="fas fa-edit"></i> Editar {{ titulo }}</h2>
+            <p class="edit-subtitle">ID: {{ objeto.id }}</p>
+        </div>
+        
+        <div class="edit-actions">
+            <a href="{% url 'crud_detalle' modelo objeto.id %}" class="btn-back">
+                <i class="fas fa-times"></i> Cancelar
+            </a>
+            <button type="submit" form="editForm" class="btn-save">
+                <i class="fas fa-save"></i> Guardar Cambios
+            </button>
+        </div>
+    </div>
+
+    <div class="edit-content">
+        <form method="POST" enctype="multipart/form-data" class="edit-form" id="editForm">
+            {% csrf_token %}
+            
+            <div class="edit-grid">
+                {% for field in form %}
+                <div class="form-group {% if field.errors %}has-error{% endif %}">
+                    <label for="{{ field.id_for_label }}">
+                        {{ field.label }}
+                        {% if field.field.required %}<span class="required">*</span>{% endif %}
+                    </label>
+                    
+                    {% if field.name == 'imagen' or field.name == 'foto' %}
+                    <div class="file-upload-container">
+                        {% if field.value %}
+                        <div class="current-image">
+                            <img src="{{ field.value.url }}" alt="Imagen actual" class="current-img">
+                            <span class="current-label">Imagen actual</span>
+                        </div>
+                        {% endif %}
+                        
+                        <div class="file-upload">
+                            <input type="file" name="{{ field.name }}" id="{{ field.id_for_label }}" 
+                                   accept="image/*" onchange="previewEditImage(this)">
+                            <label for="{{ field.id_for_label }}" class="upload-label">
+                                <i class="fas fa-cloud-upload-alt"></i>
+                                <span>{% if field.value %}Cambiar imagen{% else %}Subir imagen{% endif %}</span>
+                            </label>
+                            <div class="image-preview" id="imagePreview{{ field.name }}">
+                                <img id="previewEditImage{{ field.name }}" src="" alt="Vista previa">
+                                <span class="no-preview">No hay nueva imagen seleccionada</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    {% elif field.field.widget.input_type == 'checkbox' %}
+                    <div class="checkbox-container">
+                        {{ field }}
+                        <label for="{{ field.id_for_label }}" class="checkbox-label"></label>
+                        <span class="checkbox-text">{{ field.label }}</span>
+                    </div>
+                    
+                    {% elif field.field.widget.input_type == 'select' %}
+                    <div class="select-container">
+                        {{ field }}
+                    </div>
+                    
+                    {% else %}
+                    {{ field }}
+                    {% endif %}
+                    
+                    {% if field.help_text %}
+                    <small class="form-text">{{ field.help_text }}</small>
+                    {% endif %}
+                    
+                    {% if field.errors %}
+                    <div class="error-message">
+                        {% for error in field.errors %}
+                        <p><i class="fas fa-exclamation-circle"></i> {{ error }}</p>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+            
+            <input type="hidden" name="next" value="{{ request.GET.next }}">
+        </form>
+        
+        <!-- Historial de Cambios -->
+        <div class="change-history">
+            <h3><i class="fas fa-history"></i> Historial de Cambios</h3>
+            <table class="history-table">
+                <thead>
+                    <tr>
+                        <th>Fecha</th>
+                        <th>Usuario</th>
+                        <th>Campo</th>
+                        <th>Valor Anterior</th>
+                        <th>Valor Nuevo</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% if modelo == 'productos' or modelo == 'artistas' or modelo == 'encargos' %}
+                    <tr>
+                        <td>{{ objeto.fecha_actualizacion|date:"d/m/Y H:i" }}</td>
+                        <td>{{ user.username }}</td>
+                        <td>Última actualización</td>
+                        <td>-</td>
+                        <td>-</td>
+                    </tr>
+                    {% if objeto.fecha_creacion != objeto.fecha_actualizacion %}
+                    <tr>
+                        <td>{{ objeto.fecha_creacion|date:"d/m/Y H:i" }}</td>
+                        <td>Sistema</td>
+                        <td>Creación</td>
+                        <td>-</td>
+                        <td>-</td>
+                    </tr>
+                    {% endif %}
+                    
+                    {% elif modelo == 'usuarios' %}
+                    <tr>
+                        <td>{% now "d/m/Y H:i" %}</td>
+                        <td>{{ user.username }}</td>
+                        <td>Edición actual</td>
+                        <td>-</td>
+                        <td>-</td>
+                    </tr>
+                    <tr>
+                        <td>{{ objeto.last_login|date:"d/m/Y H:i"|default:"Nunca" }}</td>
+                        <td>{{ objeto.username }}</td>
+                        <td>Último acceso</td>
+                        <td>-</td>
+                        <td>-</td>
+                    </tr>
+                    <tr>
+                        <td>{{ objeto.date_joined|date:"d/m/Y H:i" }}</td>
+                        <td>Sistema</td>
+                        <td>Registro</td>
+                        <td>-</td>
+                        <td>-</td>
+                    </tr>
+                    
+                    {% elif modelo == 'pedidos' %}
+                    <tr>
+                        <td>{{ objeto.fecha_actualizacion|date:"d/m/Y H:i" }}</td>
+                        <td>{{ user.username }}</td>
+                        <td>Última actualización</td>
+                        <td>-</td>
+                        <td>-</td>
+                    </tr>
+                    <tr>
+                        <td>{{ objeto.fecha_pedido|date:"d/m/Y H:i" }}</td>
+                        <td>{{ objeto.usuario.username }}</td>
+                        <td>Creación del pedido</td>
+                        <td>-</td>
+                        <td>-</td>
+                    </tr>
+                    
+                    {% elif modelo == 'categorias' %}
+                    <tr>
+                        <td>{% now "d/m/Y H:i" %}</td>
+                        <td>{{ user.username }}</td>
+                        <td>Edición actual</td>
+                        <td>-</td>
+                        <td>-</td>
+                    </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    
+    <!-- Acciones Avanzadas -->
+    <div class="advanced-actions">
+        <h3><i class="fas fa-tools"></i> Acciones Avanzadas</h3>
+        
+        <div class="actions-grid">
+            {% if modelo == 'productos' %}
+            {% if objeto.activo %}
+            <button class="btn-action-edit btn-deactivate" onclick="toggleActivation(false)">
+                <i class="fas fa-eye-slash"></i> Desactivar
+            </button>
+            {% else %}
+            <button class="btn-action-edit btn-activate" onclick="toggleActivation(true)">
+                <i class="fas fa-eye"></i> Activar
+            </button>
+            {% endif %}
+            
+            {% if objeto.destacado %}
+            <button class="btn-action-edit btn-unfeature" onclick="toggleFeature(false)">
+                <i class="fas fa-star"></i> Quitar Destacado
+            </button>
+            {% else %}
+            <button class="btn-action-edit btn-feature" onclick="toggleFeature(true)">
+                <i class="fas fa-star"></i> Destacar
+            </button>
+            {% endif %}
+            
+            {% elif modelo == 'artistas' %}
+            {% if objeto.activo %}
+            <button class="btn-action-edit btn-deactivate" onclick="toggleArtistaActivation(false)">
+                <i class="fas fa-eye-slash"></i> Desactivar Artista
+            </button>
+            {% else %}
+            <button class="btn-action-edit btn-activate" onclick="toggleArtistaActivation(true)">
+                <i class="fas fa-eye"></i> Activar Artista
+            </button>
+            {% endif %}
+            
+            {% elif modelo == 'usuarios' %}
+            {% if objeto.is_active %}
+            <button class="btn-action-edit btn-deactivate" onclick="deactivateUser()">
+                <i class="fas fa-user-slash"></i> Desactivar Usuario
+            </button>
+            {% else %}
+            <button class="btn-action-edit btn-activate" onclick="activateUser()">
+                <i class="fas fa-user-check"></i> Activar Usuario
+            </button>
+            {% endif %}
+            
+            {% if objeto.is_staff %}
+            <button class="btn-action-edit btn-unstaff" onclick="removeStaff()">
+                <i class="fas fa-user-times"></i> Quitar Staff
+            </button>
+            {% else %}
+            <button class="btn-action-edit btn-staff" onclick="addStaff()">
+                <i class="fas fa-user-tie"></i> Hacer Staff
+            </button>
+            {% endif %}
+            
+            {% if not objeto.is_superuser %}
+            {% if objeto.is_superuser %}
+            <button class="btn-action-edit btn-unsuperuser" onclick="removeSuperuser()">
+                <i class="fas fa-user-shield"></i> Quitar Superuser
+            </button>
+            {% else %}
+            <button class="btn-action-edit btn-superuser" onclick="addSuperuser()">
+                <i class="fas fa-user-shield"></i> Hacer Superuser
+            </button>
+            {% endif %}
+            {% endif %}
+            
+            {% elif modelo == 'encargos' %}
+            {% if objeto.estado == 'pendiente' %}
+            <button class="btn-action-edit btn-process" onclick="changeEncargoStatus('en_proceso')">
+                <i class="fas fa-play"></i> Iniciar Proceso
+            </button>
+            {% elif objeto.estado == 'en_proceso' %}
+            <button class="btn-action-edit btn-complete" onclick="changeEncargoStatus('completado')">
+                <i class="fas fa-check"></i> Marcar Completado
+            </button>
+            {% endif %}
+            
+            {% if objeto.estado != 'cancelado' %}
+            <button class="btn-action-edit btn-cancel" onclick="changeEncargoStatus('cancelado')">
+                <i class="fas fa-ban"></i> Cancelar
+            </button>
+            {% endif %}
+            
+            <button class="btn-action-edit btn-assign" onclick="assignArtist()">
+                <i class="fas fa-user-tie"></i> Asignar Artista
+            </button>
+            
+            {% elif modelo == 'pedidos' %}
+            <button class="btn-action-edit btn-status" onclick="showStatusModal()">
+                <i class="fas fa-exchange-alt"></i> Cambiar Estado
+            </button>
+            
+            <button class="btn-action-edit btn-invoice" onclick="generateInvoice()">
+                <i class="fas fa-file-invoice"></i> Generar Factura
+            </button>
+            
+            <button class="btn-action-edit btn-email" onclick="sendEmail()">
+                <i class="fas fa-envelope"></i> Enviar Email
+            </button>
+            {% endif %}
+            
+            <a href="{% url 'crud_eliminar' modelo objeto.id %}" class="btn-action-edit btn-danger">
+                <i class="fas fa-trash"></i> Eliminar
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para cambiar estado de pedidos -->
+{% if modelo == 'pedidos' %}
+<div id="statusModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3><i class="fas fa-exchange-alt"></i> Cambiar Estado del Pedido</h3>
+            <button class="modal-close" onclick="closeModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <p>Pedido: <strong>#{{ objeto.numero_pedido }}</strong></p>
+            <p>Estado actual: <span class="status-badge status-{{ objeto.estado }}">{{ objeto.get_estado_display }}</span></p>
+            
+            <div class="status-options">
+                {% for status in status_choices %}
+                <div class="status-option">
+                    <input type="radio" name="newStatus" id="status{{ forloop.counter }}" value="{{ status.0 }}" 
+                           {% if objeto.estado == status.0 %}checked{% endif %}>
+                    <label for="status{{ forloop.counter }}">
+                        <span class="status-badge status-{{ status.0 }}">{{ status.1 }}</span>
+                    </label>
+                </div>
+                {% endfor %}
+            </div>
+            
+            <div class="form-group">
+                <label for="statusNotes">Notas del cambio:</label>
+                <textarea id="statusNotes" rows="3" placeholder="Explicación del cambio de estado..."></textarea>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn-cancel" onclick="closeModal()">Cancelar</button>
+            <button class="btn-confirm" onclick="confirmStatusChange()">Confirmar Cambio</button>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Modal para restablecer contraseña -->
+{% if modelo == 'usuarios' %}
+<div id="passwordModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3><i class="fas fa-key"></i> Restablecer Contraseña</h3>
+            <button class="modal-close" onclick="closePasswordModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <p>Usuario: <strong>{{ objeto.username }}</strong></p>
+            <p>Email: <strong>{{ objeto.email }}</strong></p>
+            
+            <div class="form-group">
+                <label for="newPassword">Nueva Contraseña:</label>
+                <input type="password" id="newPassword" class="form-control" placeholder="Ingresa nueva contraseña">
+            </div>
+            
+            <div class="form-group">
+                <label for="confirmPassword">Confirmar Contraseña:</label>
+                <input type="password" id="confirmPassword" class="form-control" placeholder="Confirma la contraseña">
+            </div>
+            
+            <div class="password-strength">
+                <p><strong>Requisitos de seguridad:</strong></p>
+                <ul>
+                    <li id="length-check">Mínimo 8 caracteres</li>
+                    <li id="uppercase-check">Al menos una mayúscula</li>
+                    <li id="lowercase-check">Al menos una minúscula</li>
+                    <li id="number-check">Al menos un número</li>
+                    <li id="special-check">Al menos un carácter especial</li>
+                </ul>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn-cancel" onclick="closePasswordModal()">Cancelar</button>
+            <button class="btn-confirm" onclick="confirmPasswordReset()">Restablecer Contraseña</button>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Vista previa de imagen en edición
+function previewEditImage(input) {
+    const fieldName = input.name;
+    const preview = document.getElementById(`previewEditImage${fieldName}`);
+    const noPreview = document.querySelector(`#imagePreview${fieldName} .no-preview`);
+    
+    if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        
+        reader.onload = function(e) {
+            preview.src = e.target.result;
+            preview.style.display = 'block';
+            noPreview.style.display = 'none';
+        }
+        
+        reader.readAsDataURL(input.files[0]);
+    }
+}
+
+// Duplicar producto
+function duplicateProduct() {
+    if (confirm('¿Crear una copia de este producto?')) {
+        fetch(`/api/productos/{{ objeto.id }}/duplicate/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                window.location.href = data.redirect_url;
+            }
+        });
+    }
+}
+
+// Activar/Desactivar producto
+function toggleActivation(activate) {
+    const action = activate ? 'activar' : 'desactivar';
+    if (confirm(`¿${action.charAt(0).toUpperCase() + action.slice(1)} este producto?`)) {
+        fetch(`/api/productos/{{ objeto.id }}/toggle-activation/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}',
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ activate: activate })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            }
+        });
+    }
+}
+
+// Destacar/No destacar producto
+function toggleFeature(feature) {
+    const action = feature ? 'destacar' : 'quitar de destacados';
+    if (confirm(`¿${action.charAt(0).toUpperCase() + action.slice(1)} este producto?`)) {
+        fetch(`/api/productos/{{ objeto.id }}/toggle-feature/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}',
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ feature: feature })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            }
+        });
+    }
+}
+
+// Activar/Desactivar artista
+function toggleArtistaActivation(activate) {
+    const action = activate ? 'activar' : 'desactivar';
+    if (confirm(`¿${action.charAt(0).toUpperCase() + action.slice(1)} este artista?`)) {
+        fetch(`/api/artistas/{{ objeto.id }}/toggle-activation/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}',
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ activate: activate })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            }
+        });
+    }
+}
+
+// Acciones para usuarios
+{% if modelo == 'usuarios' %}
+function deactivateUser() {
+    if (confirm('¿Desactivar este usuario? El usuario no podrá iniciar sesión.')) {
+        document.querySelector('[name="is_active"]').checked = false;
+        document.getElementById('editForm').submit();
+    }
+}
+
+function activateUser() {
+    if (confirm('¿Activar este usuario? El usuario podrá iniciar sesión nuevamente.')) {
+        document.querySelector('[name="is_active"]').checked = true;
+        document.getElementById('editForm').submit();
+    }
+}
+
+function addStaff() {
+    if (confirm('¿Dar permisos de staff a este usuario? Tendrá acceso al panel de administración.')) {
+        document.querySelector('[name="is_staff"]').checked = true;
+        document.getElementById('editForm').submit();
+    }
+}
+
+function removeStaff() {
+    if (confirm('¿Quitar permisos de staff a este usuario? Perderá acceso al panel de administración.')) {
+        document.querySelector('[name="is_staff"]').checked = false;
+        document.getElementById('editForm').submit();
+    }
+}
+
+function addSuperuser() {
+    if (confirm('⚠️ ¿Hacer superusuario a este usuario? Tendrá acceso completo al sistema.')) {
+        document.querySelector('[name="is_superuser"]').checked = true;
+        document.getElementById('editForm').submit();
+    }
+}
+
+function removeSuperuser() {
+    if (confirm('⚠️ ¿Quitar permisos de superusuario a este usuario? Perderá acceso completo.')) {
+        document.querySelector('[name="is_superuser"]').checked = false;
+        document.getElementById('editForm').submit();
+    }
+}
+
+function resetPassword() {
+    document.getElementById('passwordModal').style.display = 'block';
+}
+
+function closePasswordModal() {
+    document.getElementById('passwordModal').style.display = 'none';
+}
+
+function confirmPasswordReset() {
+    const newPassword = document.getElementById('newPassword').value;
+    const confirmPassword = document.getElementById('confirmPassword').value;
+    
+    if (!newPassword || !confirmPassword) {
+        alert('Por favor completa ambos campos de contraseña.');
+        return;
+    }
+    
+    if (newPassword !== confirmPassword) {
+        alert('Las contraseñas no coinciden.');
+        return;
+    }
+    
+    if (newPassword.length < 8) {
+        alert('La contraseña debe tener al menos 8 caracteres.');
+        return;
+    }
+    
+    if (!/[A-Z]/.test(newPassword)) {
+        alert('La contraseña debe contener al menos una letra mayúscula.');
+        return;
+    }
+    
+    if (!/[a-z]/.test(newPassword)) {
+        alert('La contraseña debe contener al menos una letra minúscula.');
+        return;
+    }
+    
+    if (!/[0-9]/.test(newPassword)) {
+        alert('La contraseña debe contener al menos un número.');
+        return;
+    }
+    
+    if (confirm('¿Estás seguro de restablecer la contraseña de este usuario?')) {
+        fetch(`/api/usuarios/{{ objeto.id }}/reset-password/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}',
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ new_password: newPassword })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('Contraseña restablecida exitosamente.');
+                closePasswordModal();
+            } else {
+                alert('Error al restablecer la contraseña: ' + data.error);
+            }
+        });
+    }
+}
+
+// Validar fortaleza de contraseña en tiempo real
+document.getElementById('newPassword')?.addEventListener('input', function() {
+    const password = this.value;
+    
+    // Validar longitud
+    document.getElementById('length-check').style.color = password.length >= 8 ? 'green' : 'red';
+    
+    // Validar mayúsculas
+    document.getElementById('uppercase-check').style.color = /[A-Z]/.test(password) ? 'green' : 'red';
+    
+    // Validar minúsculas
+    document.getElementById('lowercase-check').style.color = /[a-z]/.test(password) ? 'green' : 'red';
+    
+    // Validar números
+    document.getElementById('number-check').style.color = /[0-9]/.test(password) ? 'green' : 'red';
+    
+    // Validar caracteres especiales
+    document.getElementById('special-check').style.color = /[!@#$%^&*(),.?":{}|<>]/.test(password) ? 'green' : 'red';
+});
+{% endif %}
+
+// Cambiar estado de encargos
+{% if modelo == 'encargos' %}
+function changeEncargoStatus(newStatus) {
+    const statusNames = {
+        'pendiente': 'Pendiente',
+        'en_proceso': 'En Proceso',
+        'completado': 'Completado',
+        'cancelado': 'Cancelado'
+    };
+    
+    if (confirm(`¿Cambiar estado a "${statusNames[newStatus]}"?`)) {
+        fetch(`/api/encargos/{{ objeto.id }}/change-status/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}',
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ status: newStatus })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            }
+        });
+    }
+}
+
+function assignArtist() {
+    const artistId = prompt('ID del artista a asignar:');
+    if (artistId) {
+        fetch(`/api/encargos/{{ objeto.id }}/assign-artist/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}',
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ artist_id: artistId })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            }
+        });
+    }
+}
+{% endif %}
+
+// Modal para cambiar estado de pedidos
+{% if modelo == 'pedidos' %}
+function showStatusModal() {
+    document.getElementById('statusModal').style.display = 'block';
+}
+
+function closeModal() {
+    document.getElementById('statusModal').style.display = 'none';
+}
+
+function confirmStatusChange() {
+    const newStatus = document.querySelector('input[name="newStatus"]:checked');
+    const notes = document.getElementById('statusNotes').value;
+    
+    if (!newStatus) {
+        alert('Por favor selecciona un nuevo estado.');
+        return;
+    }
+    
+    fetch(`/api/pedidos/{{ objeto.id }}/change-status/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': '{{ csrf_token }}',
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            status: newStatus.value,
+            notes: notes
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            closeModal();
+            location.reload();
+        }
+    });
+}
+
+// Cerrar modal al hacer clic fuera
+window.onclick = function(event) {
+    const modal = document.getElementById('statusModal');
+    const passwordModal = document.getElementById('passwordModal');
+    
+    if (event.target == modal) {
+        closeModal();
+    }
+    
+    if (event.target == passwordModal) {
+        closePasswordModal();
+    }
+}
+{% endif %}
+
+// Generar factura
+function generateInvoice() {
+    window.open(`/api/pedidos/{{ objeto.id }}/invoice/`, '_blank');
+}
+
+// Enviar email
+function sendEmail() {
+    window.location.href = `mailto:{{ objeto.usuario.email }}?subject=ArtStore - Pedido #{{ objeto.numero_pedido }}`;
+}
+
+// Validación de formulario
+document.getElementById('editForm').addEventListener('submit', function(e) {
+    // Validar campos requeridos
+    const requiredFields = this.querySelectorAll('[required]');
+    let isValid = true;
+    
+    requiredFields.forEach(field => {
+        if (!field.value.trim()) {
+            field.classList.add('error');
+            isValid = false;
+            
+            // Mostrar mensaje de error
+            let errorDiv = field.closest('.form-group').querySelector('.error-message');
+            if (!errorDiv) {
+                errorDiv = document.createElement('div');
+                errorDiv.className = 'error-message';
+                errorDiv.innerHTML = `<p><i class="fas fa-exclamation-circle"></i> Este campo es requerido</p>`;
+                field.closest('.form-group').appendChild(errorDiv);
+            }
+            errorDiv.style.display = 'block';
+        } else {
+            field.classList.remove('error');
+            const errorDiv = field.closest('.form-group').querySelector('.error-message');
+            if (errorDiv) errorDiv.style.display = 'none';
+        }
+    });
+    
+    if (!isValid) {
+        e.preventDefault();
+        alert('Por favor completa todos los campos requeridos.');
+        return;
+    }
+    
+    // Mostrar indicador de carga
+    const submitBtn = this.querySelector('.btn-save');
+    const originalText = submitBtn.innerHTML;
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Guardando...';
+    submitBtn.disabled = true;
+    
+    // Restaurar después de 5 segundos
+    setTimeout(() => {
+        submitBtn.innerHTML = originalText;
+        submitBtn.disabled = false;
+    }, 5000);
+});
+
+// Guardar automáticamente cada 30 segundos (autosave)
+let autoSaveTimeout;
+function autoSave() {
+    clearTimeout(autoSaveTimeout);
+    autoSaveTimeout = setTimeout(() => {
+        const formData = new FormData(document.getElementById('editForm'));
+        
+        fetch(window.location.href, {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showNotification('Cambios guardados automáticamente', 'success');
+            }
+        });
+    }, 30000);
+}
+
+// Activar autosave
+document.querySelectorAll('input, textarea, select').forEach(field => {
+    field.addEventListener('input', autoSave);
+    field.addEventListener('change', autoSave);
+});
+
+function showNotification(message, type) {
+    const notification = document.createElement('div');
+    notification.className = `notification notification-${type}`;
+    notification.innerHTML = `
+        <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'}"></i>
+        <span>${message}</span>
+    `;
+    
+    document.body.appendChild(notification);
+    
+    setTimeout(() => {
+        notification.classList.add('show');
+    }, 10);
+    
+    setTimeout(() => {
+        notification.classList.remove('show');
+        setTimeout(() => notification.remove(), 300);
+    }, 3000);
+}
+</script>
+
+<style>
+/* Estilos para modales */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.5);
+}
+
+.modal-content {
+    background-color: white;
+    margin: 10% auto;
+    padding: 20px;
+    border-radius: 8px;
+    width: 80%;
+    max-width: 500px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.modal-close {
+    background: none;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+    color: #666;
+}
+
+.modal-body {
+    margin-bottom: 20px;
+}
+
+.modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+}
+
+/* Estilos para opciones de estado */
+.status-options {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 10px;
+    margin: 15px 0;
+}
+
+.status-option input[type="radio"] {
+    display: none;
+}
+
+.status-option label {
+    display: block;
+    padding: 10px;
+    border: 2px solid #e0e0e0;
+    border-radius: 6px;
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.3s;
+}
+
+.status-option input[type="radio"]:checked + label {
+    border-color: #007bff;
+    background-color: #f0f8ff;
+}
+
+/* Estilos para notificaciones */
+.notification {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    padding: 15px 20px;
+    border-radius: 6px;
+    color: white;
+    z-index: 1001;
+    transform: translateX(100%);
+    opacity: 0;
+    transition: all 0.3s ease;
+}
+
+.notification.show {
+    transform: translateX(0);
+    opacity: 1;
+}
+
+.notification-success {
+    background-color: #4CAF50;
+}
+
+.notification-error {
+    background-color: #f44336;
+}
+
+.notification-warning {
+    background-color: #ff9800;
+}
+
+/* Estilos para fortaleza de contraseña */
+.password-strength ul {
+    list-style: none;
+    padding-left: 0;
+    margin: 10px 0;
+}
+
+.password-strength li {
+    padding: 5px 0;
+    font-size: 14px;
+}
+
+.password-strength li:before {
+    content: "• ";
+    margin-right: 5px;
+}
+</style>
+{% endblock %}
